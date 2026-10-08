@@ -1,0 +1,1378 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Esercitazione tabletop</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📨</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDF0F3; --paper:#FFFFFF; --ink:#152030; --muted:#5A6576; --line:#D0D7E0; --soft:#E2E7ED; --hover:#F5F7F9; --selbg:#E6ECF4;
+  --attesa:#A15F00; --ok:#2A7634; --no:#B3261E; --inviato:#1656AE; --chiuso:#717D8E;
+  --voce:#FFF6E0; --r:6px;
+  font-family:'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color:var(--ink); background:var(--bg);
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+html,body{margin:0;background:var(--bg)}
+body{font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--inviato);outline-offset:2px}
+h1,h2,h3{margin:0;font-weight:700}
+h2{font-stretch:80%;font-size:24px;line-height:1.15}
+h3{font-size:16px}
+p{margin:0}
+.hint{font-size:13px;color:var(--muted)}
+.empty{color:var(--muted);font-size:14px;padding:6px 0}
+.link{background:none;border:0;padding:0;color:var(--inviato);text-decoration:underline;font-weight:600}
+
+/* banda della squadra */
+.band{--team:#152030;background:var(--team);color:#fff;display:grid;grid-template-columns:1fr auto auto;gap:10px 28px;align-items:end;padding:16px 22px 14px}
+.band-team{font-stretch:62%;font-weight:800;font-size:clamp(32px,5.4vw,54px);line-height:.88;letter-spacing:-.005em}
+.band-sub{font-size:13px;opacity:.82;margin-top:7px}
+.clock{text-align:right;min-width:0}
+.clock .fase{display:block;font-stretch:72%;font-weight:700;font-size:21px;line-height:1.1}
+.clock .tempo{display:block;font-size:13.5px;opacity:.85;margin-top:2px}
+.who{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.btn-light{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:var(--r);padding:6px 11px;font-size:14px;text-align:left;line-height:1.2}
+.btn-light:hover{background:rgba(255,255,255,.12)}
+.btn-light small{display:block;opacity:.8;font-size:12px}
+
+/* schede */
+.tabs{display:flex;gap:2px;background:var(--paper);border-bottom:1px solid var(--line);padding:0 14px;overflow-x:auto}
+.tabs button{border:0;background:none;padding:12px 12px 10px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent;white-space:nowrap;display:flex;gap:7px;align-items:center}
+.tabs button[aria-selected=true]{color:var(--ink);border-bottom-color:var(--team,var(--ink))}
+.badge{min-width:20px;height:20px;border-radius:10px;background:var(--no);color:#fff;font-size:12px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+.notice{background:#FFF1D6;border-bottom:1px solid #EBD3A0;padding:9px 22px;font-size:14px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+
+/* scrivania: elenco + dettaglio */
+.work{display:grid;grid-template-columns:minmax(290px,390px) 1fr;min-height:calc(100vh - 150px)}
+.list{border-right:1px solid var(--line);background:var(--paper);overflow:auto;max-height:calc(100vh - 150px)}
+.list-head{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--soft);flex-wrap:wrap;position:sticky;top:0;background:var(--paper);z-index:1}
+.detail{overflow:auto;padding:22px 28px 60px;max-height:calc(100vh - 150px)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;max-width:100%;overflow-x:auto}
+.seg button{border:0;background:#fff;padding:5px 10px;font-size:13.5px;font-weight:600;color:var(--muted);white-space:nowrap;flex:none}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed=true]{background:var(--ink);color:#fff}
+.sec{font-size:13px;font-weight:700;color:var(--muted);padding:12px 16px 6px;background:var(--bg);border-bottom:1px solid var(--soft);display:flex;justify-content:space-between}
+.row{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--soft);background:none;padding:11px 34px 11px 18px;position:relative}
+.row::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--rail,#98A2B0)}
+.row:hover{background:var(--hover)}
+.row[aria-current=true]{background:var(--selbg)}
+.row .t{font-weight:600;display:block;line-height:1.3}
+.row .m{display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);margin-top:5px}
+.row .unread{width:9px;height:9px;border-radius:50%;background:var(--inviato);position:absolute;right:14px;top:15px}
+.back{display:none;margin-bottom:12px}
+
+/* timbri di stato */
+.stamp{display:inline-block;border:1.5px solid currentColor;border-radius:3px;padding:0 6px;font-size:12px;font-weight:700;white-space:nowrap;line-height:1.5}
+.st-in_attesa{color:var(--attesa)} .st-approvato{color:var(--ok)} .st-respinto{color:var(--no)}
+.st-inviato{color:var(--inviato)} .st-chiuso{color:var(--chiuso)} .st-aperto{color:var(--ink)}
+.placard{display:inline-block;background:var(--ink);color:#fff;font-stretch:75%;font-weight:700;font-size:12.5px;padding:1px 8px;border-radius:2px;letter-spacing:.01em}
+.tag{display:inline-block;background:var(--soft);border-radius:3px;padding:0 6px;font-size:12px;font-weight:600;color:var(--muted)}
+
+/* fascicolo */
+.doc{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px 22px 20px;max-width:780px}
+.doc-top{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:13px;color:var(--muted);font-weight:600}
+.doc h2{margin:8px 0 6px}
+.route{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600;font-size:14.5px}
+.route .dot{width:10px;height:10px;border-radius:2px;background:var(--c)}
+.route .arr{color:var(--muted)}
+.meta{display:grid;grid-template-columns:max-content 1fr;gap:4px 14px;font-size:13.5px;color:var(--muted);margin:14px 0 4px}
+.meta dt{font-weight:600}
+.meta dd{margin:0;color:var(--ink)}
+.body{white-space:pre-wrap;line-height:1.6;border-top:1px solid var(--soft);padding-top:14px;margin-top:12px;max-width:72ch}
+.panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:14px 18px 16px;max-width:780px;margin-top:14px}
+.panel h3{margin-bottom:4px}
+.panel.decide{border-left:5px solid var(--attesa)}
+.panel.send{border-left:5px solid var(--inviato)}
+.panel.regia{border-left:5px solid var(--ink);background:#FAFBFC}
+.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px}
+
+/* moduli */
+.field{display:block;margin-top:12px}
+.field .lab{display:block;font-weight:600;font-size:13.5px;margin-bottom:4px}
+.field .hint{display:block;margin-top:4px}
+textarea,input[type=text],input[type=email],input[type=password],input[type=number],select{width:100%;border:1px solid var(--line);border-radius:var(--r);padding:8px 10px;background:#fff;min-width:0}
+textarea{min-height:84px;resize:vertical;line-height:1.5}
+textarea.big{min-height:220px}
+input[type=color]{width:46px;height:34px;border:1px solid var(--line);border-radius:var(--r);padding:2px;background:#fff}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 14px}
+.btn{border:1px solid var(--ink);background:var(--ink);color:#fff;border-radius:var(--r);padding:8px 14px;font-weight:600;line-height:1.2}
+.btn:hover{filter:brightness(1.15)}
+.btn.plain{background:#fff;color:var(--ink);border-color:var(--line)}
+.btn.plain:hover{background:var(--hover);filter:none}
+.btn.ok{background:var(--ok);border-color:var(--ok)}
+.btn.no{background:#fff;color:var(--no);border-color:var(--no)}
+.btn.send{background:var(--inviato);border-color:var(--inviato)}
+.btn.small{padding:4px 10px;font-size:13.5px}
+.btn:disabled{opacity:.45;cursor:default;filter:none}
+
+/* conversazione */
+.thread{max-width:780px;margin-top:22px}
+.thread>h3{margin-bottom:10px}
+.msg{padding:10px 14px 11px;border-left:4px solid var(--mc,#98A2B0);background:var(--paper);margin-bottom:8px;border-radius:0 var(--r) var(--r) 0}
+.msg.voce{background:var(--voce);--mc:#C78A12}
+.msg .h{display:flex;gap:4px 10px;flex-wrap:wrap;align-items:center;font-size:12.5px;color:var(--muted);margin-bottom:5px}
+.msg .h b{color:var(--ink);font-size:13.5px}
+.msg .x{white-space:pre-wrap;line-height:1.55}
+.composer{margin-top:12px}
+
+/* registro */
+.page{padding:22px 28px 60px;max-width:980px}
+.reg{list-style:none;padding:0;margin:18px 0 0}
+.reg li{display:grid;grid-template-columns:110px 1fr;gap:14px;padding:12px 0;border-top:1px solid var(--line)}
+.reg time{font-weight:700;font-size:17px;font-stretch:80%}
+.reg .sim{display:block;font-size:12px;color:var(--muted)}
+.reg .by{font-size:12.5px;color:var(--muted);margin-top:4px}
+.x{white-space:pre-wrap}
+
+/* regia */
+.fasi{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.fasi button{border:1px solid var(--line);background:#fff;border-radius:var(--r);padding:8px 12px;text-align:left;font-weight:600}
+.fasi button small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.fasi button[aria-pressed=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.fasi button[aria-pressed=true] small{color:#C9D1DC}
+.cards{display:grid;gap:10px;margin-top:10px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px 14px;border-left:5px solid var(--c,#98A2B0)}
+.card.done{opacity:.72}
+.card .ch{display:flex;gap:6px 10px;align-items:center;flex-wrap:wrap}
+.card .ch .t{font-weight:700;font-size:15.5px}
+.card .note{font-size:13px;color:var(--muted);margin-top:6px;white-space:pre-wrap}
+.card .x{margin-top:6px;line-height:1.5}
+.phase-h{font-stretch:75%;font-size:20px;margin:26px 0 4px}
+.stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;min-width:130px}
+.stat b{display:block;font-size:26px;font-stretch:75%;line-height:1}
+.stat span{font-size:12.5px;color:var(--muted)}
+.score{display:grid;grid-template-columns:minmax(150px,220px) 1fr;gap:6px 12px;align-items:center;margin-top:8px}
+.score .opts{display:flex;gap:4px}
+.score .opts button{width:34px;height:30px;border:1px solid var(--line);background:#fff;border-radius:4px;font-weight:700}
+.score .opts button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.big-num{font-stretch:62%;font-weight:800;font-size:76px;line-height:.9}
+.tbl-wrap{overflow-x:auto;margin-top:10px;background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--soft);vertical-align:top}
+th{font-weight:700;background:var(--hover);white-space:nowrap}
+td.n{white-space:nowrap}
+.miss{color:var(--no);font-weight:600}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.col h3{padding-bottom:6px;border-bottom:3px solid var(--c)}
+.section{margin-top:30px}
+.people{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:12px}
+.person{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--soft)}
+
+/* accesso */
+.gate{min-height:100vh;display:grid;place-items:center;padding:24px}
+.gate-box{width:100%;max-width:420px}
+.gate-title{font-stretch:62%;font-weight:800;font-size:52px;line-height:.9;margin-bottom:6px}
+.gate-box .doc{margin-top:18px}
+
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--r);font-weight:600;max-width:calc(100vw - 32px);z-index:20;box-shadow:0 6px 24px rgba(21,32,48,.25)}
+.toast.err{background:var(--no)}
+.loading{padding:40px;color:var(--muted)}
+.modal-bg{position:fixed;inset:0;background:rgba(21,32,48,.45);display:grid;place-items:center;padding:16px;z-index:10}
+.modal{background:var(--paper);border-radius:var(--r);padding:20px 22px;width:100%;max-width:440px}
+
+@media (max-width:860px){
+  .band{grid-template-columns:1fr;align-items:start}
+  .clock{text-align:left}
+  .who{justify-content:flex-start}
+  .work{grid-template-columns:1fr}
+  .list,.detail{max-height:none}
+  .work.has-sel .list{display:none}
+  .work:not(.has-sel) .detail{display:none}
+  .back{display:inline-block}
+  .detail,.page{padding:16px 14px 50px}
+  .cols,.people,.grid2{grid-template-columns:1fr}
+  .reg li{grid-template-columns:80px 1fr}
+  .score{grid-template-columns:1fr}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SUPABASE_URL = "https://IL-TUO-PROGETTO.supabase.co";
+const SUPABASE_KEY = "LA-TUA-CHIAVE-PUBLISHABLE";
+/* =====================================================================
+   Portale tabletop – un solo file: React 18 + htm + Supabase
+   ===================================================================== */
+const { useState, useEffect, useMemo, useRef, useCallback } = React;
+const html = htm.bind(React.createElement);
+const CONFIGURATO = !/IL-TUO-PROGETTO/.test(SUPABASE_URL) || window.__MOCK__;
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ---------- preferenze del dispositivo ---------- */
+const LSP = 'tt:' + SUPABASE_URL.replace(/^https?:\/\//, '').split('.')[0] + ':';
+function lsGet(k, d) { try { const v = localStorage.getItem(LSP + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } }
+function lsSet(k, v) { try { localStorage.setItem(LSP + k, JSON.stringify(v)); } catch (e) {} }
+
+/* ---------- configurazione (campaign.config) ---------- */
+const DEFAULT_CFG = {
+  titolo: 'Esercitazione tabletop',
+  ruoli: { A: [], B: [] },
+  tipi_canale: ['Richiesta di autorizzazione', 'Richiesta di decisione', 'Aggiornamento'],
+  comunicazioni: [],
+  destinatari: [],
+  voci: ['Facilitatore'],
+  fasi: [{ nome: 'Avvio', tempo: '' }],
+};
+const strList = (v, d) => Array.isArray(v) ? v.map(x => String(x == null ? '' : x).trim()).filter(Boolean) : d;
+function normCfg(c) {
+  c = c && typeof c === 'object' ? c : {};
+  const r = c.ruoli && typeof c.ruoli === 'object' ? c.ruoli : {};
+  return {
+    titolo: String(c.titolo || DEFAULT_CFG.titolo),
+    ruoli: { A: strList(r.A, []), B: strList(r.B, []) },
+    tipi_canale: strList(c.tipi_canale, DEFAULT_CFG.tipi_canale),
+    comunicazioni: Array.isArray(c.comunicazioni)
+      ? c.comunicazioni.filter(x => x && x.tipo).map(x => ({
+          tipo: String(x.tipo).trim(), destinatario: String(x.destinatario || '').trim(),
+          termine: String(x.termine || '').trim(), fase: String(x.fase || '').trim() }))
+      : [],
+    destinatari: strList(c.destinatari, []),
+    voci: strList(c.voci, DEFAULT_CFG.voci).length ? strList(c.voci, DEFAULT_CFG.voci) : DEFAULT_CFG.voci,
+    fasi: Array.isArray(c.fasi) && c.fasi.some(f => f && f.nome)
+      ? c.fasi.filter(f => f && f.nome).map(f => ({ nome: String(f.nome).trim(), tempo: String(f.tempo || '').trim() }))
+      : DEFAULT_CFG.fasi,
+  };
+}
+
+/* ---------- utilità ---------- */
+const pad = n => String(n).padStart(2, '0');
+const ms = ts => ts ? new Date(ts).getTime() : 0;
+function ora(ts) { if (!ts) return ''; const d = new Date(ts); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+function oraSec(ts) { if (!ts) return ''; const d = new Date(ts); return ora(ts) + ':' + pad(d.getSeconds()); }
+function giornoOra(ts) { if (!ts) return ''; const d = new Date(ts); return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + ' ' + ora(ts); }
+function durata(a, b) {
+  if (a == null || b == null || a === '' || b === '') return '';
+  const m = Math.max(0, Math.round((ms(b) - ms(a)) / 60000));
+  if (m < 1) return 'meno di 1 min';
+  return m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + pad(m % 60) + ' min';
+}
+const faseBreve = s => (s || '').split(' — ')[0];
+const byTime = (a, b) => ms(a.created_at) - ms(b.created_at);
+function errMsg(e) {
+  const m = (e && e.message) || String(e || '');
+  if (/relation .* does not exist|column .* does not exist|function .* does not exist|Could not find the function/i.test(m))
+    return 'Il database non è aggiornato: esegui setup.sql nell\'SQL Editor di Supabase.';
+  if (/JWT|session/i.test(m)) return 'Sessione scaduta: esci e rientra.';
+  if (/Failed to fetch|NetworkError|Load failed/i.test(m)) return 'Connessione assente: controlla la rete e riprova.';
+  if (/row-level security/i.test(m)) return 'Non hai il permesso per questa azione.';
+  return m;
+}
+function download(name, text, type) {
+  const blob = new Blob([text], { type: type || 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+function csv(rows) {
+  const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  return '\ufeff' + rows.map(r => r.map(esc).join(';')).join('\r\n');
+}
+function beep() {
+  try {
+    const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+    const ctx = beep.ctx || (beep.ctx = new C());
+    const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+    o.type = 'sine'; o.frequency.setValueAtTime(880, t); o.frequency.setValueAtTime(660, t + .12);
+    g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.18, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + .4);
+    o.connect(g); g.connect(ctx.destination); o.start(t); o.stop(t + .42);
+  } catch (e) {}
+}
+
+/* ---------- etichette ---------- */
+const STATI = {
+  canale: { in_attesa: 'In attesa di decisione', approvato: 'Approvata', respinto: 'Respinta', chiuso: 'Chiusa' },
+  esterna: { in_attesa: 'Da autorizzare', approvato: 'Autorizzata, da inviare', respinto: 'Non autorizzata', inviato: 'Inviata', chiuso: 'Chiusa' },
+  situazione: { aperto: 'Aperta', chiuso: 'Chiusa' },
+};
+const statoLabel = f => (STATI[f.kind] || {})[f.stato] || f.stato;
+const KIND_LABEL = { canale: 'Tra le stanze', esterna: 'Comunicazione esterna', situazione: 'Situazione' };
+const EVENTI = { aperto: 'Aperta', situazione: 'Situazione inviata', approvato: 'Approvata', autorizzato: 'Autorizzata',
+  respinto: 'Respinta', inviato: 'Inviata al destinatario', chiuso: 'Chiusa' };
+const CRITERI = [['tempestivita', 'Tempestività'], ['chiarezza', 'Chiarezza'], ['completezza', 'Completezza'],
+  ['coerenza', 'Accuratezza e coerenza'], ['destinatario', 'Destinatario, canale, firma']];
+
+function makeWho(d) {
+  const byId = {}; d.members.forEach(m => { byId[m.user_id] = m; });
+  const team = id => d.teams.find(t => t.id === id);
+  return {
+    member: id => byId[id],
+    name: id => (byId[id] && byId[id].nome) || 'Facilitatore',
+    team,
+    teamName: id => (team(id) && team(id).nome) || (id === 'A' ? 'Squadra A' : id === 'B' ? 'Squadra B' : 'Regia'),
+    teamColor: id => (team(id) && team(id).colore) || '#5A6576',
+  };
+}
+function groupMsgs(list) {
+  const g = {};
+  list.slice().sort(byTime).forEach(m => { (g[m.flow_id] = g[m.flow_id] || []).push(m); });
+  return g;
+}
+function activity(f, byFlow) {
+  const m = byFlow[f.id] || [];
+  return Math.max(ms(f.created_at), ms(f.decided_at), ms(f.inviato_at), ms(f.closed_at), m.length ? ms(m[m.length - 1].created_at) : 0);
+}
+function faseAt(fasi, ts) {
+  let cur = '';
+  fasi.slice().sort(byTime).forEach(x => { if (ms(x.created_at) <= ms(ts)) cur = x.fase; });
+  return cur;
+}
+
+/* ---------- dati condivisi + tempo reale ---------- */
+const T_ALL = ['campaign', 'campaign_fasi', 'teams', 'members', 'flows', 'messages', 'registro'];
+const T_MASTER = ['settings', 'copione', 'valutazioni', 'fiducia', 'flow_events'];
+const SINGLE = { campaign: 1, settings: 1 };
+
+function useData(isMaster) {
+  const [d, setD] = useState({ loaded: false, campaign: null, settings: null, campaign_fasi: [], teams: [], members: [],
+    flows: [], messages: [], registro: [], copione: [], valutazioni: [], fiducia: [], flow_events: [] });
+  const [err, setErr] = useState('');
+  const load = useCallback(async t => {
+    const { data, error } = await sb.from(t).select('*');
+    if (error) { setErr(errMsg(error)); return; }
+    setErr('');
+    setD(p => ({ ...p, [t]: SINGLE[t] ? (data[0] || null) : data }));
+  }, []);
+  const loadAll = useCallback(async () => {
+    await Promise.all((isMaster ? T_ALL.concat(T_MASTER) : T_ALL).map(load));
+    setD(p => ({ ...p, loaded: true }));
+  }, [isMaster, load]);
+  useEffect(() => {
+    loadAll();
+    const timers = {};
+    const later = t => {
+      clearTimeout(timers[t]);
+      timers[t] = setTimeout(() => {
+        load(t);
+        if (t === 'campaign') load('campaign_fasi');
+        if (isMaster && t === 'flows') { load('flow_events'); load('copione'); }
+      }, 200);
+    };
+    let ch = sb.channel('tt-' + Math.random().toString(36).slice(2));
+    ['flows', 'messages', 'members', 'campaign', 'registro', 'teams'].forEach(t => {
+      ch = ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, () => later(t));
+    });
+    ch.subscribe();
+    const vis = () => { if (document.visibilityState === 'visible') loadAll(); };
+    document.addEventListener('visibilitychange', vis);
+    const iv = setInterval(() => { ['flows', 'messages', 'campaign'].forEach(later); }, 30000);
+    return () => {
+      sb.removeChannel(ch); document.removeEventListener('visibilitychange', vis);
+      clearInterval(iv); Object.values(timers).forEach(clearTimeout);
+    };
+  }, [isMaster, load, loadAll]);
+  return { d, load, loadAll, err };
+}
+
+/* Ogni operazione: scrive, ricarica le tabelle toccate, mostra un messaggio leggibile. */
+function useOps(load) {
+  const [toast, setToast] = useState(null);
+  const say = useCallback((msg, kind) => setToast({ msg, kind: kind || 'ok', id: Date.now() }), []);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), toast.kind === 'err' ? 6000 : 2600);
+    return () => clearTimeout(t);
+  }, [toast]);
+  const run = useCallback(async (p, tables, okMsg) => {
+    try {
+      const { data, error } = await p;
+      if (error) throw error;
+      (tables || []).forEach(t => load(t));
+      if (okMsg) say(okMsg);
+      return { data, error: '' };
+    } catch (e) {
+      const m = errMsg(e); say(m, 'err'); (tables || []).forEach(t => load(t));
+      return { data: null, error: m };
+    }
+  }, [load, say]);
+  return { run, toast, say };
+}
+
+/* ---------- piccoli componenti ---------- */
+const Loading = ({ text }) => html`<div className="loading">${text || 'Caricamento…'}</div>`;
+const Toast = ({ t }) => t ? html`<div className=${'toast ' + t.kind} role="status" key=${t.id}>${t.msg}</div>` : null;
+const Stamp = ({ f }) => html`<span className=${'stamp st-' + f.stato}>${statoLabel(f)}</span>`;
+function Field({ label, hint, children }) {
+  return html`<label className="field"><span className="lab">${label}</span>${children}${hint ? html`<span className="hint">${hint}</span>` : null}</label>`;
+}
+function Band({ color, title, sub, campaign, children }) {
+  return html`<header className="band" style=${{ '--team': color }}>
+    <div><div className="band-team">${title}</div>${sub ? html`<div className="band-sub">${sub}</div>` : null}</div>
+    <div className="clock" aria-live="polite">
+      <span className="fase">${(campaign && campaign.fase) || ''}</span>
+      <span className="tempo">${(campaign && campaign.tempo_sim) || ''}</span>
+    </div>
+    <div className="who">${children}</div>
+  </header>`;
+}
+function Tabs({ tabs, value, onChange, color }) {
+  return html`<nav className="tabs" role="tablist" style=${{ '--team': color }}>
+    ${tabs.map(([id, label, n]) => html`<button key=${id} role="tab" id=${'tab-' + id} aria-selected=${value === id}
+      onClick=${() => onChange(id)}>${label}${n ? html`<span className="badge">${n}</span>` : null}</button>`)}
+  </nav>`;
+}
+function Composer({ onSend, placeholder, label, id }) {
+  const [t, setT] = useState('');
+  const [busy, setBusy] = useState(false);
+  const go = async () => {
+    if (!t.trim() || busy) return;
+    setBusy(true); const r = await onSend(t.trim()); setBusy(false);
+    if (!r || !r.error) setT('');
+  };
+  return html`<div className="composer">
+    <textarea id=${id} value=${t} placeholder=${placeholder} onChange=${e => setT(e.target.value)}
+      onKeyDown=${e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); go(); } }}></textarea>
+    <div className="actions"><button className="btn" disabled=${busy || !t.trim()} onClick=${go}>${label || 'Invia'}</button>
+      <span className="hint">Ctrl+Invio per inviare</span></div>
+  </div>`;
+}
+function Modal({ children, onClose }) {
+  useEffect(() => {
+    const k = e => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k);
+  }, [onClose]);
+  return html`<div className="modal-bg" onClick=${e => { if (e.target === e.currentTarget) onClose(); }}>
+    <div className="modal" role="dialog" aria-modal="true">${children}</div></div>`;
+}
+
+/* ---------- accesso ---------- */
+function loginErr(e) {
+  const m = (e && e.message) || '';
+  if (/Invalid login/i.test(m)) return 'Email o password non corretti.';
+  if (/already registered|already been registered/i.test(m)) return 'Questa email è già registrata: usa «Accedi».';
+  if (/at least 6|Password should/i.test(m)) return 'La password deve avere almeno 6 caratteri.';
+  if (/not confirmed/i.test(m)) return 'Email non ancora confermata.';
+  return errMsg(e);
+}
+function Login() {
+  const [mode, setMode] = useState('in');
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const go = async e => {
+    e.preventDefault(); setBusy(true); setMsg('');
+    const r = mode === 'in'
+      ? await sb.auth.signInWithPassword({ email: email.trim(), password: pw })
+      : await sb.auth.signUp({ email: email.trim(), password: pw });
+    setBusy(false);
+    if (r.error) { setMsg(loginErr(r.error)); return; }
+    if (mode === 'up' && !(r.data && r.data.session)) setMsg('Account creato. Conferma l\'email dal link ricevuto, poi accedi.');
+  };
+  return html`<div className="gate"><div className="gate-box">
+    <div className="gate-title">Esercitazione<br/>tabletop</div>
+    <p className="hint">Entra con il tuo account. La prima volta registrati: ti servirà poi il codice della tua squadra.</p>
+    <form className="doc" onSubmit=${go}>
+      <div className="seg" role="group" aria-label="Modalità">
+        <button type="button" aria-pressed=${mode === 'in'} onClick=${() => setMode('in')}>Accedi</button>
+        <button type="button" aria-pressed=${mode === 'up'} onClick=${() => setMode('up')}>Registrati</button>
+      </div>
+      <${Field} label="Email"><input id="email" type="email" autoComplete="email" required value=${email} onChange=${e => setEmail(e.target.value)}/><//>
+      <${Field} label="Password" hint=${mode === 'up' ? 'Almeno 6 caratteri.' : null}>
+        <input id="password" type="password" autoComplete=${mode === 'in' ? 'current-password' : 'new-password'} required value=${pw} onChange=${e => setPw(e.target.value)}/><//>
+      ${msg ? html`<p className="hint" style=${{ color: 'var(--no)', marginTop: '10px' }} role="alert">${msg}</p>` : null}
+      <div className="actions"><button id="login-go" className="btn" disabled=${busy}>${mode === 'in' ? 'Accedi' : 'Crea account'}</button></div>
+    </form>
+  </div></div>`;
+}
+function Join({ onDone, onLogout }) {
+  const [code, setCode] = useState('');
+  const [nome, setNome] = useState('');
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const go = async e => {
+    e.preventDefault(); setBusy(true); setMsg('');
+    const { error } = await sb.rpc('join_session', { p_code: code, p_nome: nome });
+    setBusy(false);
+    if (error) { setMsg(errMsg(error)); return; }
+    onDone();
+  };
+  return html`<div className="gate"><div className="gate-box">
+    <div className="gate-title">Entra nella<br/>tua squadra</div>
+    <p className="hint">Il codice te lo dà il facilitatore: decide in quale stanza lavori.</p>
+    <form className="doc" onSubmit=${go}>
+      <${Field} label="Codice della squadra"><input id="join-code" type="text" required autoComplete="off" value=${code} onChange=${e => setCode(e.target.value)}/><//>
+      <${Field} label="Il tuo nome" hint="Comparirà su ogni messaggio e decisione."><input id="join-name" type="text" required value=${nome} onChange=${e => setNome(e.target.value)}/><//>
+      ${msg ? html`<p className="hint" style=${{ color: 'var(--no)', marginTop: '10px' }} role="alert">${msg}</p>` : null}
+      <div className="actions"><button id="join-go" className="btn" disabled=${busy}>Entra</button>
+        <button type="button" className="btn plain" onClick=${onLogout}>Esci</button></div>
+    </form>
+  </div></div>`;
+}
+
+/* =====================================================================
+   Flussi: elenco, dettaglio, nuova richiesta
+   ===================================================================== */
+function routeOf(f, who, myTeam) {
+  if (f.kind === 'situazione') return html`<span className="placard">${f.voce}</span><span className="arr">a</span><span>${who.teamName(f.to_team)}</span>`;
+  if (f.kind === 'esterna') return html`<span>${who.teamName(f.from_team)}</span><span className="arr">a</span><b>${f.destinatario}</b>`;
+  if (myTeam && f.to_team === myTeam) return html`<span>Da ${who.teamName(f.from_team)}</span>`;
+  if (myTeam) return html`<span>A ${who.teamName(f.to_team)}</span>`;
+  return html`<span>${who.teamName(f.from_team)}</span><span className="arr">a</span><span>${who.teamName(f.to_team)}</span>`;
+}
+function railOf(f, who) { return f.kind === 'situazione' ? '#152030' : who.teamColor(f.from_team); }
+
+function FlowList({ flows, byFlow, sel, onSel, unread, sectionOf, sections, who, myTeam }) {
+  const groups = sections.map(() => []);
+  flows.forEach(f => { const s = sectionOf(f); if (s >= 0) groups[s].push(f); });
+  groups.forEach(g => g.sort((a, b) => activity(b, byFlow) - activity(a, byFlow)));
+  if (!flows.length) return html`<p className="empty" style=${{ padding: '16px' }}>Ancora niente qui.</p>`;
+  return html`<div>${groups.map((g, i) => g.length ? html`<div key=${i}>
+    <div className="sec"><span>${sections[i]}</span><span>${g.length}</span></div>
+    ${g.map(f => html`<button key=${f.id} className="row" aria-current=${sel === f.id} style=${{ '--rail': railOf(f, who) }}
+        data-flow=${f.id} onClick=${() => onSel(f.id)}>
+      <span className="t">${f.titolo}</span>
+      <span className="m">${routeOf(f, who, myTeam)}<${Stamp} f=${f}/><span>${ora(new Date(activity(f, byFlow)))}</span></span>
+      ${unread && unread(f) ? html`<span className="unread" aria-label="Novità"></span>` : null}
+    </button>`)}
+  </div>` : null)}</div>`;
+}
+
+function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen, onBack, hasFlow }) {
+  const [nota, setNota] = useState('');
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { setNota(''); }, [f.id]);
+  const act = async (p, okMsg) => { setBusy(true); const r = await ops.run(p, ['flows', 'messages'], okMsg); setBusy(false); return r; };
+  const ro = !!me.preview;
+  const part = !ro && !isMaster;
+  const mine = f.from_team === me.team, toMe = f.to_team === me.team;
+  const isExt = f.kind === 'esterna';
+  const canDecide = part && f.stato === 'in_attesa' && toMe;
+  const canWithdraw = part && f.stato === 'in_attesa' && mine;
+  const canSend = part && isExt && f.stato === 'approvato' && mine;
+  const canPost = part && ['approvato', 'aperto'].includes(f.stato) && (mine || toMe);
+  const canClose = !ro && (isMaster || mine || toMe) && ['approvato', 'aperto', 'inviato'].includes(f.stato);
+  const canRetry = part && f.stato === 'respinto' && mine;
+  const lastVoice = msgs.slice().reverse().find(m => m.voce);
+  const altro = me.team === 'A' ? 'B' : 'A';
+  const tipoAgg = cfg.tipi_canale.find(t => /aggiorn/i.test(t)) || cfg.tipi_canale[0] || '';
+  const tipoEsc = cfg.tipi_canale.find(t => /escalation/i.test(t)) || cfg.tipi_canale[0] || '';
+
+  const forward = () => {
+    if (f.kind === 'situazione') {
+      onCompose({ kind: 'canale', prefill: { tipo: tipoEsc, titolo: f.titolo, rif: f.id,
+        testo: f.voce + ' riferisce:\n«' + f.motivo + '»\n\n' } });
+    } else if (lastVoice) {
+      onCompose({ kind: 'canale', prefill: { tipo: tipoAgg, titolo: 'Risposta di ' + lastVoice.voce + ': ' + f.titolo, rif: f.id,
+        testo: lastVoice.voce + ' ha risposto alle ' + ora(lastVoice.created_at) + ':\n«' + lastVoice.testo + '»\n\n' } });
+    }
+  };
+  const decisioneLbl = isExt ? 'Autorizzazione' : 'Decisione';
+  const persona = (id, ruolo) => who.name(id) + (ruolo ? ', ' + ruolo : '');
+
+  return html`<div>
+    ${onBack ? html`<button className="btn plain small back" onClick=${onBack}>Torna all'elenco</button>` : null}
+    <article className="doc" id="flow-detail">
+      <div className="doc-top"><span>${KIND_LABEL[f.kind]}${f.tipo && f.kind !== 'situazione' ? ': ' + f.tipo : ''}</span><${Stamp} f=${f}/></div>
+      <h2>${f.titolo}</h2>
+      <div className="route">${routeOf(f, who, isMaster ? null : me.team)}</div>
+      <dl className="meta">
+        ${f.kind === 'situazione'
+          ? html`<dt>Arrivata</dt><dd>${ora(f.created_at)}${f.tempo_sim ? ' — ' + f.tempo_sim : ''}</dd>`
+          : html`<dt>Aperta da</dt><dd>${persona(f.opened_by, f.opened_ruolo)} alle ${ora(f.created_at)}${f.tempo_sim ? ' — ' + f.tempo_sim : ''}</dd>`}
+        ${f.decided_at ? html`<dt>${decisioneLbl}</dt><dd>${f.stato === 'respinto' ? 'Respinta' : (isExt ? 'Autorizzata' : 'Approvata')} da ${persona(f.decided_by, f.decided_ruolo)} alle ${ora(f.decided_at)}${f.to_team ? ' (dopo ' + durata(f.created_at, f.decided_at) + ')' : ''}</dd>` : null}
+        ${f.nota_decisione ? html`<dt>Nota</dt><dd>${f.nota_decisione}</dd>` : null}
+        ${f.inviato_at ? html`<dt>Inviata</dt><dd>da ${who.name(f.inviato_by)} alle ${ora(f.inviato_at)}</dd>` : null}
+        ${f.closed_at ? html`<dt>Chiusa</dt><dd>da ${who.name(f.closed_by)} alle ${ora(f.closed_at)}</dd>` : null}
+        ${f.rif && hasFlow && hasFlow(f.rif) ? html`<dt>Collegata a</dt><dd><button className="link" onClick=${() => onOpen(f.rif)}>apri il flusso precedente</button></dd>` : null}
+      </dl>
+      ${f.motivo ? html`<div className="body">${f.motivo}</div>` : null}
+    </article>
+
+    ${canDecide ? html`<section className="panel decide">
+      <h3>${isExt ? 'Autorizzate questa comunicazione?' : 'Approvate questa richiesta?'}</h3>
+      <p className="hint">La decisione resta agli atti con nome, ruolo e orario. Decide chi per primo risponde.</p>
+      <${Field} label="Nota per l'altra squadra"><textarea id="decide-note" value=${nota} placeholder=${isExt ? 'Facoltativa. Se non autorizzate, spiegate cosa cambiare.' : 'Facoltativa'} onChange=${e => setNota(e.target.value)}></textarea><//>
+      <div className="actions">
+        <button id="btn-approve" className="btn ok" disabled=${busy} onClick=${() => act(sb.rpc('decide_flow', { p_id: f.id, p_esito: 'approvato', p_nota: nota }), isExt ? 'Autorizzata' : 'Approvata')}>${isExt ? 'Autorizza' : 'Approva'}</button>
+        <button id="btn-reject" className="btn no" disabled=${busy} onClick=${() => act(sb.rpc('decide_flow', { p_id: f.id, p_esito: 'respinto', p_nota: nota }), isExt ? 'Non autorizzata' : 'Respinta')}>${isExt ? 'Non autorizzare' : 'Respingi'}</button>
+      </div>
+    </section>` : null}
+
+    ${canSend ? html`<section className="panel send">
+      <h3>Autorizzata: ora potete inviarla</h3>
+      <p className="hint">Arriva a ${f.destinatario} così com'è scritta e non si modifica più. Le risposte del destinatario compaiono qui sotto.</p>
+      <div className="actions"><button id="btn-send" className="btn send" disabled=${busy}
+        onClick=${() => { if (window.confirm('Inviare la comunicazione a ' + f.destinatario + '?')) act(sb.rpc('send_external', { p_id: f.id }), 'Inviata a ' + f.destinatario); }}>Invia a ${f.destinatario}</button></div>
+    </section>` : null}
+
+    ${f.stato === 'in_attesa' && mine && !isMaster ? html`<section className="panel">
+      <p>In attesa della risposta di ${who.teamName(f.to_team)}.</p>
+      ${canWithdraw ? html`<div className="actions"><button className="btn plain small" disabled=${busy}
+        onClick=${() => { if (window.confirm('Ritirare questa richiesta?')) act(sb.rpc('close_flow', { p_id: f.id }), 'Ritirata'); }}>Ritira</button></div>` : null}
+    </section>` : null}
+
+    ${(canRetry || (part && (f.kind === 'situazione' || (isExt && f.stato === 'inviato' && mine && lastVoice)))) ? html`<div className="actions" style=${{ maxWidth: '780px' }}>
+      ${canRetry ? html`<button id="btn-retry" className="btn plain" onClick=${() => onCompose({ kind: f.kind, prefill: { tipo: f.tipo, titolo: f.titolo, testo: f.motivo, destinatario: f.destinatario, rif: f.id } })}>Riproponi con modifiche</button>` : null}
+      ${part && (f.kind === 'situazione' || (isExt && f.stato === 'inviato' && mine && lastVoice)) ? html`<button id="btn-forward" className="btn plain" onClick=${forward}>Porta a ${who.teamName(altro)}</button>` : null}
+    </div>` : null}
+
+    <section className="thread">
+      <h3>${f.kind === 'situazione' ? 'Conversazione con ' + f.voce : isExt ? (f.stato === 'inviato' ? 'Risposte del destinatario' : 'Discussione sul testo') : 'Conversazione tra le squadre'}</h3>
+      ${msgs.map(m => html`<${Msg} key=${m.id} m=${m} who=${who} isMaster=${isMaster}/>`)}
+      ${!msgs.length ? html`<p className="empty">${f.stato === 'in_attesa' ? 'Si potrà scrivere dopo la decisione.' : 'Nessun messaggio.'}</p>` : null}
+      ${canPost ? html`<${Composer} id="post-text" onSend=${t => act(sb.rpc('post_message', { p_flow: f.id, p_testo: t }))}
+        placeholder=${f.kind === 'situazione' ? 'Rispondi a ' + f.voce + '…' : 'Scrivi all\'altra squadra…'}/>` : null}
+      ${part && isExt && f.stato === 'inviato' ? html`<p className="hint" style=${{ marginTop: '8px' }}>Per integrare o correggere serve una nuova comunicazione, da autorizzare di nuovo.</p>` : null}
+      ${canClose ? html`<div className="actions"><button className="btn plain small" disabled=${busy}
+        onClick=${() => { if (window.confirm('Chiudere questo flusso? Resterà leggibile ma non si potrà più scrivere.')) act(sb.rpc('close_flow', { p_id: f.id }), 'Chiuso'); }}>Chiudi il flusso</button></div>` : null}
+    </section>
+
+    ${isMaster ? html`<${VoiceComposer} f=${f} cfg=${cfg} who=${who} ops=${ops}/>` : null}
+    ${isMaster && f.kind !== 'situazione' ? html`<${Valutazione} f=${f} d=${d} ops=${ops}/>` : null}
+  </div>`;
+}
+
+function Msg({ m, who, isMaster }) {
+  const isVoce = !!m.voce;
+  return html`<div className=${'msg' + (isVoce ? ' voce' : '')} style=${isVoce ? null : { '--mc': who.teamColor(m.team_id) }}>
+    <div className="h">
+      ${isVoce ? html`<span className="placard">${m.voce}</span>` : html`<b>${who.name(m.author)}</b>${m.ruolo ? html`<span>${m.ruolo}</span>` : null}<span>${who.teamName(m.team_id)}</span>`}
+      <time>${ora(m.created_at)}</time>
+      ${isMaster && m.solo_team ? html`<span className="tag">visibile solo a ${who.teamName(m.solo_team)}</span>` : null}
+    </div>
+    <div className="x">${m.testo}</div>
+  </div>`;
+}
+
+function VoiceComposer({ f, cfg, who, ops }) {
+  const defVoce = f.kind === 'situazione' ? f.voce : f.kind === 'esterna' ? f.destinatario : cfg.voci[0];
+  const defSolo = f.kind === 'esterna' ? (f.from_team || '') : '';
+  const [voce, setVoce] = useState(defVoce);
+  const [solo, setSolo] = useState(defSolo);
+  useEffect(() => { setVoce(defVoce); setSolo(defSolo); }, [f.id]);
+  const voci = Array.from(new Set([defVoce].concat(cfg.voci).filter(Boolean)));
+  return html`<section className="panel regia">
+    <h3>Rispondi come una voce</h3>
+    <p className="hint">Il messaggio arriva con il cartello della voce scelta. ${f.kind === 'esterna' ? 'Un avviso vago genera domande; una notifica incompleta torna indietro con richieste di integrazione.' : ''}</p>
+    <div className="grid2">
+      <${Field} label="Voce"><select id="voice-select" value=${voce} onChange=${e => setVoce(e.target.value)}>${voci.map(v => html`<option key=${v}>${v}</option>`)}</select><//>
+      ${f.kind !== 'situazione' ? html`<${Field} label="Chi lo legge"><select id="voice-solo" value=${solo} onChange=${e => setSolo(e.target.value)}>
+        ${f.from_team && f.to_team ? html`<option value="">Entrambe le squadre</option>` : null}
+        ${[f.from_team, f.to_team].filter(Boolean).map(t => html`<option key=${t} value=${t}>Solo ${who.teamName(t)}</option>`)}
+      </select><//>` : html`<div></div>`}
+    </div>
+    <${Composer} id="voice-text" label=${'Invia come ' + voce} placeholder="Testo della risposta…"
+      onSend=${t => ops.run(sb.rpc('voice_message', { p_flow: f.id, p_voce: voce, p_testo: t, p_solo_team: solo || null }), ['messages'], 'Inviato come ' + voce)}/>
+  </section>`;
+}
+
+function Valutazione({ f, d, ops }) {
+  const v = d.valutazioni.find(x => x.flow_id === f.id) || {};
+  const [nota, setNota] = useState(v.nota || '');
+  useEffect(() => { setNota(v.nota || ''); }, [f.id]);
+  const save = patch => ops.run(sb.from('valutazioni').upsert({ flow_id: f.id, ...patch, updated_at: new Date().toISOString() }), ['valutazioni']);
+  const vals = CRITERI.map(([k]) => v[k]).filter(x => x);
+  return html`<section className="panel regia" id="valutazione">
+    <h3>Valutazione${vals.length ? ' — media ' + (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : ''}</h3>
+    <p className="hint">Non visibile alle squadre. Da 1 a 5; un secondo clic sullo stesso valore lo toglie.</p>
+    <div className="score">
+      ${CRITERI.map(([k, lbl]) => html`<${React.Fragment} key=${k}><span>${lbl}</span><span className="opts">
+        ${[1, 2, 3, 4, 5].map(n => html`<button key=${n} aria-pressed=${v[k] === n} aria-label=${lbl + ' ' + n}
+          onClick=${() => save({ [k]: v[k] === n ? null : n })}>${n}</button>`)}
+      </span><//>`)}
+    </div>
+    <${Field} label="Note per il debriefing"><textarea value=${nota} onChange=${e => setNota(e.target.value)} onBlur=${() => { if (nota !== (v.nota || '')) save({ nota }); }}></textarea><//>
+  </section>`;
+}
+
+function Compose({ kind, prefill, cfg, me, who, ops, onDone, onCancel }) {
+  prefill = prefill || {};
+  const isExt = kind === 'esterna';
+  const tipi = (isExt ? cfg.comunicazioni.map(c => c.tipo) : cfg.tipi_canale).concat(['Altro']);
+  const knownDest = d => cfg.destinatari.includes(d);
+  const [tipo, setTipo] = useState(prefill.tipo || '');
+  const [titolo, setTitolo] = useState(prefill.titolo || '');
+  const [testo, setTesto] = useState(prefill.testo || '');
+  const [dest, setDest] = useState(prefill.destinatario ? (knownDest(prefill.destinatario) ? prefill.destinatario : '__altro') : '');
+  const [destFree, setDestFree] = useState(prefill.destinatario && !knownDest(prefill.destinatario) ? prefill.destinatario : '');
+  const [busy, setBusy] = useState(false);
+  const myTeam = who.team(me.team) || {};
+  const other = who.team(me.team === 'A' ? 'B' : 'A') || {};
+  const selfAuth = isExt && myTeam.autorizza;
+  const pickTipo = v => {
+    if (!titolo || tipi.includes(titolo)) setTitolo(v === 'Altro' ? '' : v);
+    setTipo(v);
+    if (isExt) { const c = cfg.comunicazioni.find(x => x.tipo === v); if (c && knownDest(c.destinatario)) setDest(c.destinatario); }
+  };
+  const destinatario = dest === '__altro' ? destFree.trim() : dest;
+  const ok = titolo.trim() && testo.trim() && (!isExt || destinatario);
+  const submit = async () => {
+    setBusy(true);
+    const r = await ops.run(sb.rpc('open_flow', { p_kind: kind, p_tipo: tipo, p_titolo: titolo, p_testo: testo,
+      p_destinatario: isExt ? destinatario : null, p_rif: prefill.rif || null }), ['flows'],
+      isExt ? (selfAuth ? 'Pronta: ora potete inviarla' : 'Mandata a ' + other.nome + ' per l\'autorizzazione') : 'Richiesta mandata a ' + other.nome);
+    setBusy(false);
+    if (!r.error) onDone(r.data);
+  };
+  return html`<div className="doc" id="compose" style=${{ maxWidth: '780px' }}>
+    <div className="doc-top"><span>${isExt ? 'Nuova comunicazione esterna' : 'Nuova richiesta a ' + other.nome}</span></div>
+    <p className="hint" style=${{ marginTop: '6px' }}>${isExt
+      ? (selfAuth ? 'La firmate voi: sarà autorizzata subito e la potrete inviare. Resta visibile solo alla vostra squadra.'
+                  : 'Prima di partire la deve autorizzare ' + other.nome + '. Scrivetela come la leggerà il destinatario.')
+      : other.nome + ' la riceve e decide se approvarla. Dopo la decisione potete scrivervi nel flusso.'}</p>
+    <div className="grid2">
+      <${Field} label=${isExt ? 'Tipo di comunicazione' : 'Tipo di richiesta'}>
+        <select id="compose-tipo" value=${tipo} onChange=${e => pickTipo(e.target.value)}>
+          <option value="">Scegli…</option>${tipi.map(t => html`<option key=${t}>${t}</option>`)}
+          ${tipo && !tipi.includes(tipo) ? html`<option>${tipo}</option>` : null}
+        </select><//>
+      ${isExt ? html`<${Field} label="Destinatario">
+        <select id="compose-dest" value=${dest} onChange=${e => setDest(e.target.value)}>
+          <option value="">Scegli…</option>${cfg.destinatari.map(t => html`<option key=${t}>${t}</option>`)}<option value="__altro">Altro…</option>
+        </select>
+        ${dest === '__altro' ? html`<input type="text" style=${{ marginTop: '6px' }} placeholder="Chi riceve la comunicazione" value=${destFree} onChange=${e => setDestFree(e.target.value)}/>` : null}
+      <//>` : html`<div></div>`}
+    </div>
+    <${Field} label="Oggetto"><input id="compose-titolo" type="text" value=${titolo} onChange=${e => setTitolo(e.target.value)}/><//>
+    <${Field} label=${isExt ? 'Testo della comunicazione' : 'Testo'}
+      hint=${isExt ? 'Sarà letta per tempestività, chiarezza, completezza, coerenza e correttezza di destinatario e firma.' : null}>
+      <textarea id="compose-testo" className=${isExt ? 'big' : ''} value=${testo} onChange=${e => setTesto(e.target.value)}></textarea><//>
+    <div className="actions">
+      <button id="compose-go" className="btn" disabled=${!ok || busy} onClick=${submit}>${isExt ? (selfAuth ? 'Salva e firma' : 'Manda per l\'autorizzazione') : 'Manda la richiesta'}</button>
+      <button className="btn plain" onClick=${onCancel}>Annulla</button>
+    </div>
+  </div>`;
+}
+
+/* =====================================================================
+   Stanza della squadra (anche anteprima del facilitatore)
+   ===================================================================== */
+function useSeen(key, flows, byFlow) {
+  const [seen, setSeen] = useState(() => {
+    const s = lsGet('seen:' + key, null); if (s) return s;
+    const init = {}; flows.forEach(f => { init[f.id] = activity(f, byFlow); }); return init;
+  });
+  useEffect(() => { lsSet('seen:' + key, seen); }, [seen]);
+  const unread = f => activity(f, byFlow) > (seen[f.id] || 0);
+  const mark = f => { const a = activity(f, byFlow); if ((seen[f.id] || 0) < a) setSeen(s => ({ ...s, [f.id]: a })); };
+  return { unread, mark };
+}
+
+function Room({ d, ops, me, onLogout }) {
+  const cfg = normCfg(d.campaign && d.campaign.config);
+  const who = makeWho(d);
+  const team = who.team(me.team) || { nome: '', colore: '#152030' };
+  const [tab, setTab] = useState(() => lsGet('tab:' + me.team, 'canale'));
+  const [sel, setSel] = useState(null);
+  const [compose, setCompose] = useState(null);
+  const [mine, setMine] = useState(false);
+  const [profile, setProfile] = useState(false);
+  useEffect(() => { lsSet('tab:' + me.team, tab); }, [tab]);
+
+  const flows = d.flows.filter(f => f.from_team === me.team || f.to_team === me.team);
+  const messages = d.messages.filter(m => !m.solo_team || m.solo_team === me.team);
+  const byFlow = groupMsgs(messages);
+  const seen = useSeen((me.preview ? 'p' : me.id) + ':' + me.team, flows, byFlow);
+  const byKind = k => flows.filter(f => f.kind === k);
+  const unreadIn = k => byKind(k).filter(seen.unread).length;
+  const totalUnread = ['canale', 'esterna', 'situazione'].reduce((a, k) => a + unreadIn(k), 0);
+  const prev = useRef(totalUnread);
+  useEffect(() => {
+    if (!me.preview && totalUnread > prev.current && lsGet('suono', true)) beep();
+    prev.current = totalUnread;
+  }, [totalUnread]);
+
+  const selFlow = sel && flows.find(f => f.id === sel);
+  const selAct = selFlow ? activity(selFlow, byFlow) : 0;
+  useEffect(() => { if (selFlow) seen.mark(selFlow); }, [sel, selAct]);
+
+  const open = id => {
+    const f = flows.find(x => x.id === id); if (!f) return;
+    setTab(f.kind); setCompose(null); setSel(id);
+  };
+  const mineFilter = f => f.opened_by === me.id || f.decided_by === me.id || f.inviato_by === me.id ||
+    (byFlow[f.id] || []).some(m => m.author === me.id);
+  const list = (tab === 'registro' ? [] : byKind(tab)).filter(f => !mine || mineFilter(f));
+  const sectionOf = f => {
+    if (f.stato === 'in_attesa' && f.to_team === me.team) return 0;
+    if (f.kind === 'esterna' && f.stato === 'approvato' && f.from_team === me.team) return 1;
+    if (f.stato === 'respinto' || f.stato === 'chiuso') return 3;
+    return 2;
+  };
+  const sections = [tab === 'esterna' ? 'Da autorizzare' : 'Da decidere', 'Autorizzate, da inviare', 'In corso', 'Concluse'];
+  const tabs = [
+    ['canale', 'Tra le stanze', unreadIn('canale')],
+    ['esterna', 'Comunicazioni esterne', unreadIn('esterna')],
+    ['situazione', 'Situazioni', unreadIn('situazione')],
+    ['registro', 'Registro delle decisioni', 0],
+  ];
+  const emptyText = {
+    canale: 'Qui passano le richieste tra le due stanze. Scegline una dall\'elenco o aprine una nuova.',
+    esterna: 'Qui si preparano le comunicazioni verso clienti, partner, autorità, assicurazione e stampa. Valgono solo se autorizzate per iscritto.',
+    situazione: 'Qui arrivano i messaggi del SOC, dell\'IT Operations e degli esterni. Rispondi dentro la situazione o portala all\'altra squadra.',
+  };
+  const ruoli = cfg.ruoli[me.team] || [];
+
+  return html`<div className="app">
+    <${Band} color=${team.colore} title=${team.nome} sub=${me.preview ? 'Anteprima in sola lettura' : cfg.titolo} campaign=${d.campaign}>
+      ${!me.preview ? html`<button className="btn-light" id="btn-profile" onClick=${() => setProfile(true)}>${me.nome}<small>${me.ruolo || 'Scegli il ruolo'}</small></button>
+        <button className="btn-light" onClick=${onLogout}>Esci</button>` : null}
+    <//>
+    ${!me.preview && !me.ruolo ? html`<div className="notice">Scegli il tuo ruolo del piano: comparirà accanto al tuo nome su richieste, decisioni e messaggi.
+      <button className="btn small" onClick=${() => setProfile(true)}>Scegli il ruolo</button></div>` : null}
+    <${Tabs} tabs=${tabs} value=${tab} color=${team.colore} onChange=${t => { setTab(t); setSel(null); setCompose(null); }}/>
+    ${tab === 'registro' ? html`<${Registro} d=${d} me=${me} who=${who} ops=${ops}/>` : html`
+    <div className=${'work' + (sel || compose ? ' has-sel' : '')}>
+      <div className="list">
+        <div className="list-head">
+          ${tab !== 'situazione' && !me.preview ? html`<button id="btn-new" className="btn small" onClick=${() => { setCompose({ kind: tab }); setSel(null); }}>
+            ${tab === 'canale' ? '+ Nuova richiesta' : '+ Nuova comunicazione'}</button>` : html`<span></span>`}
+          <div className="seg" role="group" aria-label="Filtro">
+            <button aria-pressed=${!mine} onClick=${() => setMine(false)}>Squadra</button>
+            <button id="btn-mine" aria-pressed=${mine} onClick=${() => setMine(true)}>Le mie</button>
+          </div>
+        </div>
+        <${FlowList} flows=${list} byFlow=${byFlow} sel=${sel} onSel=${id => { setSel(id); setCompose(null); }} unread=${seen.unread}
+          sectionOf=${sectionOf} sections=${sections} who=${who} myTeam=${me.team}/>
+      </div>
+      <div className="detail">
+        ${compose ? html`<${Compose} key=${JSON.stringify(compose)} kind=${compose.kind} prefill=${compose.prefill} cfg=${cfg} me=${me} who=${who} ops=${ops}
+            onCancel=${() => setCompose(null)} onDone=${id => { setCompose(null); setTab(compose.kind); setSel(id); }}/>`
+          : selFlow ? html`<${FlowDetail} key=${selFlow.id} f=${selFlow} msgs=${byFlow[selFlow.id] || []} d=${d} who=${who} me=${me} ops=${ops} cfg=${cfg}
+            onCompose=${c => { setTab(c.kind); setSel(null); setCompose(c); }} onOpen=${open} onBack=${() => setSel(null)} hasFlow=${id => flows.some(x => x.id === id)}/>`
+          : html`<div className="doc" style=${{ maxWidth: '620px' }}><p>${emptyText[tab]}</p></div>`}
+      </div>
+    </div>`}
+    ${profile ? html`<${Profile} me=${me} ruoli=${ruoli} ops=${ops} onClose=${() => setProfile(false)}/>` : null}
+    <${Toast} t=${ops.toast}/>
+  </div>`;
+}
+
+function Profile({ me, ruoli, ops, onClose }) {
+  const known = ruoli.includes(me.ruolo);
+  const [sel, setSelR] = useState(me.ruolo ? (known ? me.ruolo : '__altro') : '');
+  const [free, setFree] = useState(known ? '' : (me.ruolo || ''));
+  const [suono, setSuono] = useState(lsGet('suono', true));
+  const ruolo = sel === '__altro' ? free.trim() : sel;
+  const save = async () => {
+    lsSet('suono', suono);
+    const r = await ops.run(sb.rpc('set_ruolo', { p_ruolo: ruolo }), ['members'], 'Profilo aggiornato');
+    if (!r.error) onClose();
+  };
+  return html`<${Modal} onClose=${onClose}>
+    <h2>${me.nome}</h2>
+    <${Field} label="Ruolo del piano" hint="I ruoli si assegnano in sala: scegli quello che ti è stato dato.">
+      <select id="ruolo-select" value=${sel} onChange=${e => setSelR(e.target.value)}>
+        <option value="">Nessuno</option>${ruoli.map(r => html`<option key=${r}>${r}</option>`)}<option value="__altro">Altro…</option>
+      </select>
+      ${sel === '__altro' ? html`<input type="text" style=${{ marginTop: '6px' }} value=${free} onChange=${e => setFree(e.target.value)} placeholder="Il tuo ruolo"/>` : null}
+    <//>
+    <label className="field" style=${{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <input type="checkbox" checked=${suono} onChange=${e => setSuono(e.target.checked)}/> Suono quando arriva qualcosa di nuovo</label>
+    <div className="actions"><button id="ruolo-save" className="btn" onClick=${save}>Salva</button><button className="btn plain" onClick=${onClose}>Annulla</button></div>
+  <//>`;
+}
+
+function Registro({ d, me, who, ops }) {
+  const entries = d.registro.filter(r => r.team_id === me.team).sort((a, b) => byTime(b, a));
+  return html`<div className="page" id="registro">
+    <h2>Registro delle decisioni</h2>
+    <p className="hint" style=${{ marginTop: '4px', maxWidth: '68ch' }}>Ogni voce resta agli atti con orario, tempo simulato e autore, e non si modifica. Nella discussione finale i due registri vengono messi uno accanto all'altro. Per correggere, aggiungi una nuova voce.</p>
+    ${!me.preview ? html`<div style=${{ maxWidth: '780px' }}><${Composer} id="reg-text" label="Aggiungi al registro"
+      placeholder="Cosa è stato deciso, da chi e perché…" onSend=${t => ops.run(sb.rpc('add_registro', { p_testo: t }), ['registro'], 'Aggiunta al registro')}/></div>` : null}
+    <ol className="reg">${entries.map(r => html`<li key=${r.id}>
+      <div><time>${ora(r.created_at)}</time><span className="sim">${r.tempo_sim || ''}</span></div>
+      <div><div className="x">${r.testo}</div><div className="by">${who.name(r.author)}${r.ruolo ? ', ' + r.ruolo : ''}${r.fase ? ' — ' + r.fase : ''}</div></div>
+    </li>`)}</ol>
+    ${!entries.length ? html`<p className="empty" style=${{ marginTop: '12px' }}>Il registro è vuoto.</p>` : null}
+  </div>`;
+}
+
+/* =====================================================================
+   Regia del facilitatore
+   ===================================================================== */
+function fiduciaSerie(items) {
+  let v = 100;
+  return items.slice().sort(byTime).map(x => { v = Math.max(0, Math.min(100, v + x.delta)); return { ...x, valore: v }; });
+}
+function FiduciaChart({ serie, fasi }) {
+  const W = 680, H = 200, L = 34, R = 12, T = 12, B = 26;
+  const pts = [{ valore: 100, created_at: null }].concat(serie);
+  const n = pts.length;
+  const x = i => L + (n <= 1 ? 0 : i * (W - L - R) / (n - 1));
+  const y = v => T + (100 - v) * (H - T - B) / 100;
+  const poly = pts.map((p, i) => x(i) + ',' + y(p.valore)).join(' ');
+  return html`<svg viewBox=${'0 0 ' + W + ' ' + H} role="img" aria-label="Andamento della fiducia dei clienti" style=${{ width: '100%', maxWidth: '760px', display: 'block' }}>
+    ${[0, 50, 100].map(v => html`<g key=${v}><line x1=${L} x2=${W - R} y1=${y(v)} y2=${y(v)} stroke="#D0D7E0" stroke-dasharray=${v === 50 ? '3 4' : null}/>
+      <text x=${L - 6} y=${y(v) + 4} textAnchor="end" fontSize="11" fill="#5A6576">${v}</text></g>`)}
+    <polyline points=${poly} fill="none" stroke="#152030" strokeWidth="2.5" strokeLinejoin="round"/>
+    ${pts.map((p, i) => html`<circle key=${i} cx=${x(i)} cy=${y(p.valore)} r="4" fill=${p.delta < 0 ? '#B3261E' : p.delta > 0 ? '#2A7634' : '#152030'}>
+      <title>${p.created_at ? ora(p.created_at) + ' ' + (p.delta > 0 ? '+' : '') + p.delta + ': ' + p.motivo + (p.fase ? ' (' + p.fase + ')' : '') : 'Inizio: 100'}</title></circle>`)}
+  </svg>`;
+}
+
+function Regia({ user, onLogout }) {
+  const { d, load, err } = useData(true);
+  const ops = useOps(load);
+  const [tab, setTab] = useState(() => lsGet('rtab', 'sessione'));
+  const [sel, setSel] = useState(null);
+  const [filtro, setFiltro] = useState('gestire');
+  const [prevTeam, setPrevTeam] = useState('A');
+  useEffect(() => { lsSet('rtab', tab); }, [tab]);
+  if (!d.loaded) return html`<${Loading}/>`;
+  const cfg = normCfg(d.campaign && d.campaign.config);
+  const who = makeWho(d);
+  const byFlow = groupMsgs(d.messages);
+  const needsMe = f => {
+    const ms_ = byFlow[f.id] || []; const last = ms_[ms_.length - 1];
+    if (f.kind === 'esterna' && f.stato === 'inviato') return !ms_.some(m => m.voce && ms(m.created_at) >= ms(f.inviato_at));
+    if (f.kind === 'situazione' && f.stato === 'aperto') return !!(last && !last.voce);
+    return false;
+  };
+  const gestire = d.flows.filter(needsMe);
+  const goFlow = id => { setTab('flussi'); setFiltro('tutti'); setSel(id); };
+  const tabs = [['sessione', 'Sessione'], ['flussi', 'Flussi', gestire.length], ['copione', 'Copione'], ['fiducia', 'Fiducia'],
+    ['debriefing', 'Debriefing'], ['anteprima', 'Vista squadre'], ['partecipanti', 'Partecipanti'], ['impostazioni', 'Impostazioni']];
+
+  let body = null;
+  if (tab === 'sessione') body = html`<${Sessione} d=${d} cfg=${cfg} who=${who} ops=${ops} gestire=${gestire} goFlow=${goFlow}/>`;
+  else if (tab === 'flussi') {
+    const filters = [['gestire', 'Da gestire'], ['esterna', 'Esterne'], ['canale', 'Tra le stanze'], ['situazione', 'Situazioni'], ['tutti', 'Tutti']];
+    const list = d.flows.filter(f => filtro === 'tutti' ? true : filtro === 'gestire' ? needsMe(f) : f.kind === filtro);
+    const selFlow = sel && d.flows.find(f => f.id === sel);
+    body = html`<div className=${'work' + (selFlow ? ' has-sel' : '')}>
+      <div className="list">
+        <div className="list-head"><div className="seg" role="group" aria-label="Filtro">
+          ${filters.map(([k, l]) => html`<button key=${k} aria-pressed=${filtro === k} onClick=${() => setFiltro(k)}>${l}</button>`)}
+        </div></div>
+        <${FlowList} flows=${list} byFlow=${byFlow} sel=${sel} onSel=${setSel} who=${who} myTeam=${null}
+          sectionOf=${f => needsMe(f) ? 0 : f.stato === 'in_attesa' ? 1 : (f.stato === 'respinto' || f.stato === 'chiuso') ? 3 : 2}
+          sections=${['Da gestire', 'In attesa di una squadra', 'In corso', 'Concluse']}/>
+      </div>
+      <div className="detail">${selFlow
+        ? html`<${FlowDetail} key=${selFlow.id} f=${selFlow} msgs=${byFlow[selFlow.id] || []} d=${d} who=${who} me=${{ id: user.id }} ops=${ops} cfg=${cfg}
+            isMaster=${true} onCompose=${() => {}} onOpen=${id => setSel(id)} onBack=${() => setSel(null)} hasFlow=${id => d.flows.some(x => x.id === id)}/>`
+        : html`<div className="doc" style=${{ maxWidth: '620px' }}><p>«Da gestire» raccoglie le comunicazioni inviate a cui il destinatario non ha ancora risposto e le situazioni in cui una squadra ha scritto all'ultima voce.</p></div>`}
+      </div></div>`;
+  }
+  else if (tab === 'copione') body = html`<${Copione} d=${d} cfg=${cfg} who=${who} ops=${ops} goFlow=${goFlow}/>`;
+  else if (tab === 'fiducia') body = html`<${Fiducia} d=${d} ops=${ops}/>`;
+  else if (tab === 'debriefing') body = html`<${Debriefing} d=${d} cfg=${cfg} who=${who} goFlow=${goFlow}/>`;
+  else if (tab === 'anteprima') body = html`<div>
+      <div className="list-head" style=${{ justifyContent: 'flex-start', background: 'var(--paper)' }}>
+        <span className="hint">Vedi quello che vede la squadra, in sola lettura:</span>
+        <div className="seg">${['A', 'B'].map(t => html`<button key=${t} aria-pressed=${prevTeam === t} onClick=${() => setPrevTeam(t)}>${who.teamName(t)}</button>`)}</div>
+      </div>
+      <${Room} key=${prevTeam} d=${d} ops=${ops} me=${{ id: 'anteprima', team: prevTeam, preview: true }}/>
+    </div>`;
+  else if (tab === 'partecipanti') body = html`<${Partecipanti} d=${d} cfg=${cfg} who=${who} ops=${ops}/>`;
+  else if (tab === 'impostazioni') body = html`<${Impostazioni} d=${d} cfg=${cfg} ops=${ops} load=${load}/>`;
+
+  return html`<div className="app">
+    <${Band} color="#152030" title="Regia" sub=${cfg.titolo} campaign=${d.campaign}>
+      <button className="btn-light" onClick=${onLogout}>Esci</button>
+    <//>
+    ${err ? html`<div className="notice" role="alert">${err}</div>` : null}
+    <${Tabs} tabs=${tabs} value=${tab} color="#152030" onChange=${t => { setTab(t); setSel(null); }}/>
+    ${body}
+    <${Toast} t=${ops.toast}/>
+  </div>`;
+}
+
+function Sessione({ d, cfg, who, ops, gestire, goFlow }) {
+  const [tempo, setTempo] = useState((d.campaign && d.campaign.tempo_sim) || '');
+  useEffect(() => { setTempo((d.campaign && d.campaign.tempo_sim) || ''); }, [d.campaign && d.campaign.tempo_sim]);
+  const fase = (d.campaign && d.campaign.fase) || '';
+  const setFase = (nome, t) => ops.run(sb.rpc('set_fase', { p_fase: nome, p_tempo: t }), ['campaign', 'campaign_fasi'], 'Ora in corso: ' + nome);
+  const cnt = (k, pred) => d.flows.filter(f => f.kind === k && pred(f)).length;
+  const storico = d.campaign_fasi.slice().sort(byTime);
+  return html`<div className="page">
+    <h2>Fase in corso</h2>
+    <p className="hint" style=${{ marginTop: '4px' }}>Le squadre vedono subito fase e tempo simulato nella loro banda. Ogni cambio resta nello storico e segna gli eventi.</p>
+    <div className="fasi">${cfg.fasi.map(f => html`<button key=${f.nome} aria-pressed=${fase === f.nome} onClick=${() => setFase(f.nome, f.tempo)}>
+      ${f.nome}${f.tempo ? html`<small>${f.tempo}</small>` : null}</button>`)}</div>
+    <div className="grid2" style=${{ maxWidth: '640px' }}>
+      <${Field} label="Tempo simulato mostrato alle squadre" hint="Per esempio «Giorno 1, ore 11:30». Cambialo quando l'orologio della simulazione avanza.">
+        <input id="tempo-sim" type="text" value=${tempo} onChange=${e => setTempo(e.target.value)}/><//>
+      <div style=${{ alignSelf: 'end', paddingBottom: '22px' }}><button className="btn" onClick=${() => setFase(fase, tempo)}>Aggiorna il tempo</button></div>
+    </div>
+
+    <div className="section"><h2>Il quadro</h2>
+      <div className="stats">
+        <div className="stat"><b>${gestire.length}</b><span>da gestire in regia</span></div>
+        <div className="stat"><b>${cnt('canale', f => f.stato === 'in_attesa')}</b><span>richieste in attesa</span></div>
+        <div className="stat"><b>${cnt('esterna', f => f.stato === 'in_attesa')}</b><span>esterne da autorizzare</span></div>
+        <div className="stat"><b>${cnt('esterna', f => f.stato === 'approvato')}</b><span>autorizzate non inviate</span></div>
+        <div className="stat"><b>${cnt('esterna', f => f.stato === 'inviato' || f.inviato_at)}</b><span>esterne inviate</span></div>
+        <div className="stat"><b>${d.members.length}</b><span>partecipanti</span></div>
+      </div>
+      ${gestire.length ? html`<div className="cards">${gestire.map(f => html`<button key=${f.id} className="row" style=${{ '--rail': railOf(f, who), background: 'var(--paper)', border: '1px solid var(--line)' }} onClick=${() => goFlow(f.id)}>
+        <span className="t">${f.titolo}</span><span className="m">${routeOf(f, who, null)}<${Stamp} f=${f}/></span></button>`)}</div>` : null}
+    </div>
+
+    <div className="section"><h2>Storico delle fasi</h2>
+      ${storico.length ? html`<div className="tbl-wrap"><table><thead><tr><th>Ora</th><th>Fase</th><th>Tempo simulato</th></tr></thead><tbody>
+        ${storico.map(s => html`<tr key=${s.id}><td className="n">${oraSec(s.created_at)}</td><td>${s.fase}</td><td>${s.tempo_sim}</td></tr>`)}
+      </tbody></table></div>` : html`<p className="empty">La sessione non è ancora partita: scegli la prima fase.</p>`}
+    </div>
+  </div>`;
+}
+
+const EMPTY_SIT = { fase: '', ordine: 0, titolo: '', voce: '', team_id: 'B', testo: '', condizione: '', note: '' };
+function SituazioneForm({ init, cfg, who, onSave, onSend, onCancel }) {
+  const [s, setS] = useState({ ...EMPTY_SIT, fase: cfg.fasi[0] ? cfg.fasi[0].nome : '', voce: cfg.voci[0], ...init });
+  const set = k => e => setS({ ...s, [k]: e.target.value });
+  const ok = s.titolo.trim() && s.testo.trim() && s.voce.trim();
+  return html`<div className="card" id="sit-form" style=${{ '--c': who.teamColor(s.team_id) }}>
+    <div className="grid2">
+      <${Field} label="Fase"><select value=${s.fase} onChange=${set('fase')}>${cfg.fasi.map(f => html`<option key=${f.nome}>${f.nome}</option>`)}
+        ${s.fase && !cfg.fasi.some(f => f.nome === s.fase) ? html`<option>${s.fase}</option>` : null}</select><//>
+      <${Field} label="Arriva a"><select id="sit-team" value=${s.team_id} onChange=${set('team_id')}>${['A', 'B'].map(t => html`<option key=${t} value=${t}>${who.teamName(t)}</option>`)}</select><//>
+      <${Field} label="Voce"><input id="sit-voce" type="text" list="voci-list" value=${s.voce} onChange=${set('voce')}/>
+        <datalist id="voci-list">${cfg.voci.map(v => html`<option key=${v} value=${v}/>`)}</datalist><//>
+      <${Field} label="Ordine nella fase"><input type="number" value=${s.ordine} onChange=${e => setS({ ...s, ordine: parseInt(e.target.value, 10) || 0 })}/><//>
+    </div>
+    <${Field} label="Titolo"><input id="sit-titolo" type="text" value=${s.titolo} onChange=${set('titolo')}/><//>
+    <${Field} label="Testo che arriva alla squadra"><textarea id="sit-testo" className="big" value=${s.testo} onChange=${set('testo')}></textarea><//>
+    <${Field} label="Condizione (bivio)" hint="Facoltativa: quando usare questa versione."><input type="text" value=${s.condizione} onChange=${set('condizione')}/><//>
+    <${Field} label="Note di regia" hint="Le vedi solo tu."><textarea value=${s.note} onChange=${set('note')}></textarea><//>
+    <div className="actions">
+      ${onSave ? html`<button id="sit-save" className="btn" disabled=${!ok} onClick=${() => onSave(s)}>Salva nel copione</button>` : null}
+      ${onSend ? html`<button id="sit-send" className="btn send" disabled=${!ok} onClick=${() => onSend(s)}>Invia ora</button>` : null}
+      <button className="btn plain" onClick=${onCancel}>Annulla</button>
+    </div>
+  </div>`;
+}
+
+function Copione({ d, cfg, who, ops, goFlow }) {
+  const [edit, setEdit] = useState(null);   // id | 'nuova'
+  const send = (s, copioneId) => ops.run(sb.rpc('send_situazione', { p_team: s.team_id, p_voce: s.voce, p_titolo: s.titolo, p_testo: s.testo, p_copione: copioneId || null }),
+    ['flows', 'copione'], 'Inviata a ' + who.teamName(s.team_id));
+  const save = async (s, id) => {
+    const row = { fase: s.fase, ordine: s.ordine, titolo: s.titolo.trim(), voce: s.voce.trim(), team_id: s.team_id, testo: s.testo, condizione: s.condizione, note: s.note };
+    const r = await ops.run(id ? sb.from('copione').update(row).eq('id', id) : sb.from('copione').insert(row), ['copione'], 'Salvata');
+    if (!r.error) setEdit(null);
+  };
+  const ordineFasi = cfg.fasi.map(f => f.nome);
+  const fasi = Array.from(new Set(ordineFasi.concat(d.copione.map(c => c.fase))));
+  const fase = (d.campaign && d.campaign.fase) || '';
+  return html`<div className="page">
+    <h2>Copione</h2>
+    <p className="hint" style=${{ marginTop: '4px', maxWidth: '70ch' }}>Le situazioni preparate per ogni fase. «Invia ora» le fa arrivare solo alla squadra indicata, con il cartello della voce. Dove c'è un bivio, invia la versione che corrisponde alle scelte delle squadre.</p>
+    <div className="actions">
+      <button id="btn-new-sit" className="btn" onClick=${() => setEdit('nuova')}>+ Nuova situazione</button>
+    </div>
+    ${edit === 'nuova' ? html`<div className="cards"><${SituazioneForm} cfg=${cfg} who=${who} init=${{ fase: fase || EMPTY_SIT.fase }}
+      onSave=${s => save(s)} onSend=${async s => { const r = await send(s); if (!r.error) setEdit(null); }} onCancel=${() => setEdit(null)}/></div>` : null}
+    ${fasi.map(fn => {
+      const items = d.copione.filter(c => c.fase === fn).sort((a, b) => a.ordine - b.ordine || a.id - b.id);
+      if (!items.length) return null;
+      return html`<section key=${fn}><h3 className="phase-h">${fn}${fn === fase ? ' (in corso)' : ''}</h3><div className="cards">
+        ${items.map(c => edit === c.id
+          ? html`<${SituazioneForm} key=${c.id} init=${c} cfg=${cfg} who=${who} onSave=${s => save(s, c.id)} onCancel=${() => setEdit(null)}/>`
+          : html`<div key=${c.id} className=${'card' + (c.inviato_flow ? ' done' : '')} style=${{ '--c': who.teamColor(c.team_id) }} data-copione=${c.id}>
+            <div className="ch"><span className="t">${c.titolo}</span><span className="placard">${c.voce}</span><span>a ${who.teamName(c.team_id)}</span>
+              ${c.condizione ? html`<span className="tag">${c.condizione}</span>` : null}</div>
+            <div className="x">${c.testo}</div>
+            ${c.note ? html`<div className="note">Regia: ${c.note}</div>` : null}
+            <div className="actions">
+              ${c.inviato_flow
+                ? html`<span className="hint">Inviata alle ${ora((d.flows.find(f => f.id === c.inviato_flow) || {}).created_at)}</span>
+                  <button className="btn plain small" onClick=${() => goFlow(c.inviato_flow)}>Apri</button>
+                  <button className="btn plain small" onClick=${() => { if (window.confirm('Inviarla di nuovo?')) send(c, c.id); }}>Invia di nuovo</button>`
+                : html`<button className="btn send small" onClick=${() => send(c, c.id)}>Invia ora</button>`}
+              <button className="btn plain small" onClick=${() => setEdit(c.id)}>Modifica</button>
+              <button className="btn plain small" onClick=${() => { if (window.confirm('Eliminare «' + c.titolo + '» dal copione?')) ops.run(sb.from('copione').delete().eq('id', c.id), ['copione'], 'Eliminata'); }}>Elimina</button>
+            </div>
+          </div>`)}
+      </div></section>`;
+    })}
+  </div>`;
+}
+
+function Fiducia({ d, ops }) {
+  const [motivo, setMotivo] = useState('');
+  const [delta, setDelta] = useState('');
+  const serie = fiduciaSerie(d.fiducia);
+  const valore = serie.length ? serie[serie.length - 1].valore : 100;
+  const fase = (d.campaign && d.campaign.fase) || '';
+  const add = async n => {
+    if (!n) return;
+    const r = await ops.run(sb.from('fiducia').insert({ delta: n, motivo: motivo.trim(), fase }), ['fiducia'], 'Fiducia ' + (n > 0 ? '+' : '') + n);
+    if (!r.error) { setMotivo(''); setDelta(''); }
+  };
+  return html`<div className="page">
+    <h2>Fiducia dei clienti</h2>
+    <p className="hint" style=${{ marginTop: '4px', maxWidth: '70ch' }}>Parte da 100 e si muove con la qualità delle comunicazioni e con gli impegni mantenuti. Le squadre non la vedono: se ne legge l'andamento nella discussione finale.</p>
+    <div style=${{ display: 'flex', gap: '28px', alignItems: 'flex-end', flexWrap: 'wrap', marginTop: '16px' }}>
+      <div><div className="big-num" id="fiducia-val">${valore}</div><span className="hint">su 100</span></div>
+      <div style=${{ flex: '1', minWidth: '260px', maxWidth: '520px' }}>
+        <${Field} label="Perché cambia"><input id="fiducia-motivo" type="text" value=${motivo} placeholder="Per esempio: avviso ai 41 clienti chiaro e puntuale" onChange=${e => setMotivo(e.target.value)}/><//>
+        <div className="actions">
+          ${[-10, -5, 5, 10].map(n => html`<button key=${n} className=${'btn small ' + (n < 0 ? 'no' : 'ok')} onClick=${() => add(n)}>${n > 0 ? '+' + n : n}</button>`)}
+          <input type="number" style=${{ width: '90px' }} value=${delta} placeholder="±" onChange=${e => setDelta(e.target.value)}/>
+          <button className="btn plain small" onClick=${() => add(parseInt(delta, 10) || 0)}>Applica</button>
+        </div>
+      </div>
+    </div>
+    <div className="section"><${FiduciaChart} serie=${serie}/></div>
+    <div className="tbl-wrap"><table><thead><tr><th>Ora</th><th>Fase</th><th>Variazione</th><th>Valore</th><th>Motivo</th><th></th></tr></thead><tbody>
+      ${serie.slice().reverse().map(x => html`<tr key=${x.id}><td className="n">${ora(x.created_at)}</td><td>${x.fase}</td><td className="n">${x.delta > 0 ? '+' : ''}${x.delta}</td><td>${x.valore}</td><td>${x.motivo}</td>
+        <td><button className="link" onClick=${() => { if (window.confirm('Togliere questa variazione?')) ops.run(sb.from('fiducia').delete().eq('id', x.id), ['fiducia']); }}>Togli</button></td></tr>`)}
+      ${!serie.length ? html`<tr><td colSpan="6" className="hint">Nessuna variazione.</td></tr>` : null}
+    </tbody></table></div>
+  </div>`;
+}
+
+function cronologia(d, who) {
+  const flow = id => d.flows.find(f => f.id === id) || {};
+  const rows = [];
+  d.flow_events.forEach(e => { const f = flow(e.flow_id); rows.push({ t: e.created_at, fase: e.fase || faseAt(d.campaign_fasi, e.created_at), cosa: EVENTI[e.evento] || e.evento,
+    squadra: e.team_id === 'regia' ? 'Regia' : who.teamName(e.team_id), chi: e.team_id === 'regia' && f.kind === 'situazione' ? f.voce : who.name(e.user_id),
+    ruolo: (who.member(e.user_id) || {}).ruolo || '', flusso: f.titolo || '', verso: f.destinatario || '', tipo: KIND_LABEL[f.kind] || '',
+    testo: e.evento === 'aperto' || e.evento === 'situazione' ? f.motivo : (e.nota || ''), team: e.team_id }); });
+  d.messages.forEach(m => { const f = flow(m.flow_id); rows.push({ t: m.created_at, fase: faseAt(d.campaign_fasi, m.created_at), cosa: m.voce ? 'Risposta di una voce' : 'Messaggio',
+    squadra: m.voce ? 'Regia' : who.teamName(m.team_id), chi: m.voce || who.name(m.author), ruolo: m.ruolo || '', flusso: f.titolo || '', verso: f.destinatario || '',
+    tipo: KIND_LABEL[f.kind] || '', testo: m.testo, team: m.team_id || 'regia' }); });
+  d.registro.forEach(r => rows.push({ t: r.created_at, fase: r.fase || '', cosa: 'Registro', squadra: who.teamName(r.team_id), chi: who.name(r.author), ruolo: r.ruolo || '',
+    flusso: '', verso: '', tipo: 'Registro', testo: r.testo, team: r.team_id }));
+  return rows.sort((a, b) => ms(a.t) - ms(b.t));
+}
+
+function Debriefing({ d, cfg, who, goFlow }) {
+  const [vedi, setVedi] = useState('tutto');
+  const rows = cronologia(d, who);
+  const serie = fiduciaSerie(d.fiducia);
+  const media = v => { const xs = CRITERI.map(([k]) => v[k]).filter(Boolean); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
+  const valutate = d.valutazioni.map(v => ({ v, f: d.flows.find(f => f.id === v.flow_id) })).filter(x => x.f).sort((a, b) => byTime(a.f, b.f));
+  const conFase = ts => ts ? ora(ts) + ' ' + (faseBreve(faseAt(d.campaign_fasi, ts)) || '') : '';
+  const previste = cfg.comunicazioni.map(c => {
+    const fs = d.flows.filter(f => f.tipo === c.tipo).sort(byTime);
+    const aut = fs.filter(f => f.decided_at && f.stato !== 'respinto').sort((a, b) => ms(a.decided_at) - ms(b.decided_at))[0];
+    const inv = fs.filter(f => f.inviato_at).sort((a, b) => ms(a.inviato_at) - ms(b.inviato_at))[0];
+    const vs = fs.map(f => d.valutazioni.find(v => v.flow_id === f.id)).filter(Boolean).map(media).filter(x => x != null);
+    return { c, fs, prep: fs[0], aut, inv, media: vs.length ? (vs.reduce((a, b) => a + b, 0) / vs.length).toFixed(1) : '' };
+  });
+  const persone = d.members.map(m => {
+    const dec = d.flows.filter(f => f.decided_by === m.user_id && f.to_team);
+    const tempi = dec.map(f => ms(f.decided_at) - ms(f.created_at));
+    return { m, aperte: d.flows.filter(f => f.opened_by === m.user_id && f.kind !== 'situazione').length, decisioni: dec.length,
+      invii: d.flows.filter(f => f.inviato_by === m.user_id).length, messaggi: d.messages.filter(x => x.author === m.user_id).length,
+      registro: d.registro.filter(r => r.author === m.user_id).length,
+      risposta: tempi.length ? durata(0, tempi.reduce((a, b) => a + b, 0) / tempi.length) : '' };
+  });
+  const exportCrono = () => download('cronologia.csv', csv([['Ora', 'Fase', 'Evento', 'Squadra', 'Chi', 'Ruolo', 'Tipo', 'Flusso', 'Destinatario', 'Testo']]
+    .concat(rows.map(r => [oraSec(r.t), r.fase, r.cosa, r.squadra, r.chi, r.ruolo, r.tipo, r.flusso, r.verso, r.testo]))), 'text/csv;charset=utf-8');
+  const exportVal = () => download('valutazioni.csv', csv([['Flusso', 'Tipo', 'Destinatario', 'Squadra', 'Preparata', 'Inviata'].concat(CRITERI.map(c => c[1])).concat(['Media', 'Note'])]
+    .concat(valutate.map(({ v, f }) => [f.titolo, f.tipo, f.destinatario || '', who.teamName(f.from_team), oraSec(f.created_at), oraSec(f.inviato_at)]
+      .concat(CRITERI.map(([k]) => v[k] || '')).concat([media(v) != null ? media(v).toFixed(1) : '', v.nota || ''])))), 'text/csv;charset=utf-8');
+  const exportJson = () => download('sessione-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({
+    esportato: new Date().toISOString(), campaign: d.campaign, campaign_fasi: d.campaign_fasi, teams: d.teams, members: d.members, flows: d.flows,
+    messages: d.messages, registro: d.registro, flow_events: d.flow_events, valutazioni: d.valutazioni, fiducia: d.fiducia, copione: d.copione }, null, 2), 'application/json');
+  const filt = rows.filter(r => vedi === 'tutto' || r.team === vedi || (vedi === 'regia' && r.team === 'regia'));
+  return html`<div className="page" style=${{ maxWidth: '1200px' }}>
+    <h2>Debriefing</h2>
+    <div className="actions">
+      <button className="btn plain small" onClick=${exportCrono}>Scarica la cronologia (CSV)</button>
+      <button className="btn plain small" onClick=${exportVal}>Scarica le valutazioni (CSV)</button>
+      <button className="btn plain small" onClick=${exportJson}>Scarica tutto (JSON)</button>
+    </div>
+
+    <div className="section"><h3>Comunicazioni previste dallo scenario</h3>
+      <p className="hint">Per ciascuna: quando è stata preparata, autorizzata e inviata la prima volta, con la fase in cui è successo.</p>
+      <div className="tbl-wrap"><table><thead><tr><th>Comunicazione</th><th>Destinatario</th><th>Termine</th><th>Fase prevista</th><th>Preparata</th><th>Autorizzata</th><th>Inviata</th><th>Versioni</th><th>Media</th></tr></thead><tbody>
+        ${previste.map(p => html`<tr key=${p.c.tipo}><td>${p.c.tipo}</td><td>${p.c.destinatario}</td><td>${p.c.termine}</td><td>${p.c.fase}</td>
+          <td className="n">${p.prep ? html`<button className="link" onClick=${() => goFlow(p.prep.id)}>${conFase(p.prep.created_at)}</button>` : html`<span className="miss">mai</span>`}</td>
+          <td className="n">${p.aut ? conFase(p.aut.decided_at) : ''}</td>
+          <td className="n">${p.inv ? conFase(p.inv.inviato_at) : (p.prep && p.prep.kind === 'esterna' ? html`<span className="miss">non inviata</span>` : '')}</td>
+          <td>${p.fs.length || ''}</td><td>${p.media}</td></tr>`)}
+      </tbody></table></div>
+    </div>
+
+    <div className="section"><h3>Registri a confronto</h3>
+      <div className="cols">${['A', 'B'].map(t => html`<div key=${t} className="col" style=${{ '--c': who.teamColor(t) }}><h3>${who.teamName(t)}</h3>
+        <ol className="reg" style=${{ marginTop: '0' }}>${d.registro.filter(r => r.team_id === t).sort(byTime).map(r => html`<li key=${r.id} style=${{ gridTemplateColumns: '70px 1fr' }}>
+          <div><time>${ora(r.created_at)}</time><span className="sim">${r.tempo_sim || ''}</span></div>
+          <div><div className="x">${r.testo}</div><div className="by">${who.name(r.author)}${r.ruolo ? ', ' + r.ruolo : ''}</div></div></li>`)}</ol>
+        ${!d.registro.some(r => r.team_id === t) ? html`<p className="empty">Registro vuoto.</p>` : null}
+      </div>`)}</div>
+    </div>
+
+    <div className="section"><h3>Fiducia dei clienti: ${serie.length ? serie[serie.length - 1].valore : 100}</h3><${FiduciaChart} serie=${serie}/></div>
+
+    <div className="section"><h3>Valutazioni</h3>
+      <div className="tbl-wrap"><table><thead><tr><th>Comunicazione</th><th>Destinatario</th>${CRITERI.map(c => html`<th key=${c[0]}>${c[1]}</th>`)}<th>Media</th><th>Note</th></tr></thead><tbody>
+        ${valutate.map(({ v, f }) => html`<tr key=${f.id}><td><button className="link" onClick=${() => goFlow(f.id)}>${f.titolo}</button></td><td>${f.destinatario || who.teamName(f.to_team)}</td>
+          ${CRITERI.map(([k]) => html`<td key=${k}>${v[k] || ''}</td>`)}<td>${media(v) != null ? media(v).toFixed(1) : ''}</td><td>${v.nota}</td></tr>`)}
+        ${!valutate.length ? html`<tr><td colSpan="9" className="hint">Nessuna valutazione: si danno dal dettaglio di ogni flusso.</td></tr>` : null}
+      </tbody></table></div>
+    </div>
+
+    <div className="section"><h3>Partecipazione</h3>
+      <div className="tbl-wrap"><table><thead><tr><th>Persona</th><th>Squadra</th><th>Ruolo</th><th>Aperte</th><th>Decisioni</th><th>Tempo medio di decisione</th><th>Invii</th><th>Messaggi</th><th>Registro</th></tr></thead><tbody>
+        ${persone.map(p => html`<tr key=${p.m.user_id}><td>${p.m.nome}</td><td>${who.teamName(p.m.team_id)}</td><td>${p.m.ruolo}</td><td>${p.aperte}</td><td>${p.decisioni}</td><td>${p.risposta}</td><td>${p.invii}</td><td>${p.messaggi}</td><td>${p.registro}</td></tr>`)}
+      </tbody></table></div>
+    </div>
+
+    <div className="section"><h3>Cronologia completa</h3>
+      <div className="seg" style=${{ marginTop: '8px' }}>${[['tutto', 'Tutto'], ['A', who.teamName('A')], ['B', who.teamName('B')], ['regia', 'Voci']].map(([k, l]) => html`<button key=${k} aria-pressed=${vedi === k} onClick=${() => setVedi(k)}>${l}</button>`)}</div>
+      <div className="tbl-wrap"><table><thead><tr><th>Ora</th><th>Fase</th><th>Evento</th><th>Chi</th><th>Flusso</th><th>Testo</th></tr></thead><tbody>
+        ${filt.map((r, i) => html`<tr key=${i}><td className="n">${oraSec(r.t)}</td><td>${r.fase}</td><td>${r.cosa}</td><td>${r.chi}${r.ruolo ? html`<br/><span className="hint">${r.ruolo}</span>` : null}<br/><span className="hint">${r.squadra}</span></td>
+          <td>${r.flusso}${r.verso ? html`<br/><span className="hint">a ${r.verso}</span>` : null}</td><td className="x">${r.testo}</td></tr>`)}
+      </tbody></table></div>
+    </div>
+  </div>`;
+}
+
+function Partecipanti({ d, cfg, who, ops }) {
+  const upd = (id, patch, msg) => ops.run(sb.from('members').update(patch).eq('user_id', id), ['members'], msg);
+  return html`<div className="page">
+    <h2>Partecipanti</h2>
+    <p className="hint" style=${{ marginTop: '4px' }}>${d.settings ? html`Codici: <b>${d.settings.code_a}</b> per ${who.teamName('A')}, <b>${d.settings.code_b}</b> per ${who.teamName('B')}.` : null} Puoi spostare una persona o correggerne il ruolo.</p>
+    <div className="people">${['A', 'B'].map(t => html`<div key=${t} className="col" style=${{ '--c': who.teamColor(t) }}>
+      <h3>${who.teamName(t)}</h3>
+      ${d.members.filter(m => m.team_id === t).sort((a, b) => a.nome.localeCompare(b.nome)).map(m => html`<div key=${m.user_id} className="person">
+        <b>${m.nome}</b>
+        <select value=${m.ruolo} aria-label=${'Ruolo di ' + m.nome} onChange=${e => upd(m.user_id, { ruolo: e.target.value }, 'Ruolo aggiornato')}>
+          <option value="">Nessun ruolo</option>${Array.from(new Set((cfg.ruoli[t] || []).concat(m.ruolo ? [m.ruolo] : []))).map(r => html`<option key=${r}>${r}</option>`)}
+        </select>
+        <span style=${{ display: 'flex', gap: '6px' }}>
+          <button className="btn plain small" onClick=${() => upd(m.user_id, { team_id: t === 'A' ? 'B' : 'A', ruolo: '' }, 'Spostata')}>Sposta</button>
+          <button className="btn plain small" onClick=${() => { if (window.confirm('Togliere ' + m.nome + ' dalla simulazione? Potrà rientrare con il codice.')) ops.run(sb.from('members').delete().eq('user_id', m.user_id), ['members'], 'Tolta'); }}>Togli</button>
+        </span>
+      </div>`)}
+      ${!d.members.some(m => m.team_id === t) ? html`<p className="empty">Nessuno ancora.</p>` : null}
+    </div>`)}</div>
+  </div>`;
+}
+
+const lines = a => a.join('\n');
+const unlines = s => s.split('\n').map(x => x.trim()).filter(Boolean);
+function Impostazioni({ d, cfg, ops, load }) {
+  const tA = d.teams.find(t => t.id === 'A') || {}, tB = d.teams.find(t => t.id === 'B') || {};
+  const [f, setF] = useState(() => ({
+    titolo: cfg.titolo,
+    nomeA: tA.nome || '', coloreA: tA.colore || '#3B2F8F', autA: !!tA.autorizza,
+    nomeB: tB.nome || '', coloreB: tB.colore || '#0B6F6A', autB: !!tB.autorizza,
+    codeA: d.settings ? d.settings.code_a : '', codeB: d.settings ? d.settings.code_b : '',
+    ruoliA: lines(cfg.ruoli.A), ruoliB: lines(cfg.ruoli.B), tipi: lines(cfg.tipi_canale), destinatari: lines(cfg.destinatari), voci: lines(cfg.voci),
+    fasi: lines(cfg.fasi.map(x => x.nome + (x.tempo ? ' | ' + x.tempo : ''))),
+    comunicazioni: lines(cfg.comunicazioni.map(c => [c.tipo, c.destinatario, c.termine, c.fase].join(' | '))),
+  }));
+  const set = k => e => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
+  const save = async () => {
+    const raw = d.campaign && d.campaign.config ? d.campaign.config : {};
+    const config = normCfg({ ...raw, titolo: f.titolo, ruoli: { A: unlines(f.ruoliA), B: unlines(f.ruoliB) }, tipi_canale: unlines(f.tipi),
+      destinatari: unlines(f.destinatari), voci: unlines(f.voci),
+      fasi: unlines(f.fasi).map(l => { const [nome, tempo] = l.split('|').map(x => x.trim()); return { nome, tempo: tempo || '' }; }),
+      comunicazioni: unlines(f.comunicazioni).map(l => { const [tipo, destinatario, termine, fase] = l.split('|').map(x => (x || '').trim()); return { tipo, destinatario, termine, fase }; }) });
+    const errs = [];
+    for (const p of [
+      sb.from('campaign').update({ config }).eq('id', 1),
+      sb.from('teams').update({ nome: f.nomeA.trim(), colore: f.coloreA, autorizza: f.autA }).eq('id', 'A'),
+      sb.from('teams').update({ nome: f.nomeB.trim(), colore: f.coloreB, autorizza: f.autB }).eq('id', 'B'),
+      sb.from('settings').update({ code_a: f.codeA.trim(), code_b: f.codeB.trim() }).eq('id', 1),
+    ]) { const r = await ops.run(p); if (r.error) errs.push(r.error); }
+    ['campaign', 'teams', 'settings'].forEach(load);
+    if (!errs.length) ops.say('Impostazioni salvate');
+  };
+  const azzera = async () => {
+    if (!window.confirm('Azzerare la simulazione? Si cancellano flussi, messaggi, registri, valutazioni, fiducia e storico delle fasi. Partecipanti, copione e impostazioni restano.')) return;
+    if ((window.prompt('Per confermare scrivi AZZERA') || '').trim().toUpperCase() !== 'AZZERA') return;
+    const z = '00000000-0000-0000-0000-000000000000';
+    for (const p of [sb.from('flows').delete().neq('id', z), sb.from('registro').delete().gte('id', 0), sb.from('fiducia').delete().gte('id', 0),
+      sb.from('campaign_fasi').delete().gte('id', 0)]) { const r = await ops.run(p); if (r.error) return; }
+    await ops.run(sb.rpc('set_fase', { p_fase: cfg.fasi[0].nome, p_tempo: cfg.fasi[0].tempo }));
+    T_ALL.concat(T_MASTER).forEach(load);
+    ops.say('Simulazione azzerata');
+  };
+  const team = (k, t) => html`<div className="card" style=${{ '--c': f['colore' + k] }}>
+    <div className="grid2">
+      <${Field} label=${'Nome della squadra ' + k}><input type="text" value=${f['nome' + k]} onChange=${set('nome' + k)}/><//>
+      <${Field} label="Codice per entrare"><input type="text" value=${f['code' + k]} onChange=${set('code' + k)}/><//>
+    </div>
+    <div className="actions"><label style=${{ display: 'flex', gap: '8px', alignItems: 'center' }}><input type="color" value=${f['colore' + k]} onChange=${set('colore' + k)}/> Colore</label>
+      <label style=${{ display: 'flex', gap: '8px', alignItems: 'center' }}><input type="checkbox" checked=${f['aut' + k]} onChange=${set('aut' + k)}/> Autorizza le comunicazioni esterne</label></div>
+    <${Field} label="Ruoli del piano (uno per riga)"><textarea value=${f['ruoli' + k]} onChange=${set('ruoli' + k)}></textarea><//>
+  </div>`;
+  return html`<div className="page">
+    <h2>Impostazioni</h2>
+    <${Field} label="Titolo della simulazione"><input type="text" value=${f.titolo} onChange=${set('titolo')}/><//>
+    <div className="cards" style=${{ marginTop: '14px' }}>${team('A')}${team('B')}</div>
+    <p className="hint" style=${{ marginTop: '8px' }}>La squadra che autorizza firma da sola le proprie comunicazioni esterne; quelle dell'altra squadra le deve autorizzare lei. L'email del facilitatore si cambia solo dall'SQL.</p>
+    <div className="grid2">
+      <${Field} label="Tipi di richiesta tra le stanze"><textarea value=${f.tipi} onChange=${set('tipi')}></textarea><//>
+      <${Field} label="Destinatari esterni"><textarea value=${f.destinatari} onChange=${set('destinatari')}></textarea><//>
+      <${Field} label="Voci del facilitatore"><textarea value=${f.voci} onChange=${set('voci')}></textarea><//>
+      <${Field} label="Fasi" hint="Una per riga: nome | tempo simulato"><textarea value=${f.fasi} onChange=${set('fasi')}></textarea><//>
+    </div>
+    <${Field} label="Comunicazioni previste" hint="Una per riga: tipo | destinatario | termine | fase. I tipi compaiono alle squadre quando preparano una comunicazione esterna.">
+      <textarea className="big" value=${f.comunicazioni} onChange=${set('comunicazioni')}></textarea><//>
+    <div className="actions"><button id="save-settings" className="btn" onClick=${save}>Salva le impostazioni</button></div>
+    <div className="section panel" style=${{ borderLeft: '5px solid var(--no)' }}>
+      <h3>Nuova sessione</h3>
+      <p className="hint">Prima di azzerare scarica tutto dal Debriefing.</p>
+      <div className="actions"><button className="btn no" onClick=${azzera}>Azzera la simulazione</button></div>
+    </div>
+  </div>`;
+}
+
+/* =====================================================================
+   Avvio
+   ===================================================================== */
+function MemberHome({ user, onLogout }) {
+  const { d, load } = useData(false);
+  const ops = useOps(load);
+  if (!d.loaded) return html`<${Loading}/>`;
+  const m = d.members.find(x => x.user_id === user.id);
+  if (!m) return html`<div className="gate"><div className="gate-box doc"><p>Non fai più parte della simulazione. Chiedi al facilitatore il codice per rientrare.</p>
+    <div className="actions"><button className="btn" onClick=${() => location.reload()}>Riprova</button><button className="btn plain" onClick=${onLogout}>Esci</button></div></div></div>`;
+  return html`<${Room} d=${d} ops=${ops} me=${{ id: user.id, team: m.team_id, ruolo: m.ruolo, nome: m.nome }} onLogout=${onLogout}/>`;
+}
+
+function App() {
+  const [session, setSession] = useState(undefined);
+  const [role, setRole] = useState(null);
+  useEffect(() => {
+    sb.auth.getSession().then(({ data }) => setSession((data && data.session) || null));
+    const { data } = sb.auth.onAuthStateChange((_e, s) => setSession(s || null));
+    return () => data.subscription.unsubscribe();
+  }, []);
+  const uid = session && session.user && session.user.id;
+  const resolve = useCallback(async () => {
+    if (!uid) { setRole(null); return; }
+    const m = await sb.rpc('is_master');
+    if (m.error) { setRole({ kind: 'error', msg: errMsg(m.error) }); return; }
+    if (m.data === true) { setRole({ kind: 'master' }); return; }
+    const r = await sb.from('members').select('*').eq('user_id', uid).maybeSingle();
+    if (r.error) { setRole({ kind: 'error', msg: errMsg(r.error) }); return; }
+    setRole({ kind: r.data ? 'member' : 'join' });
+  }, [uid]);
+  useEffect(() => { setRole(null); resolve(); }, [uid]);
+  const logout = async () => { await sb.auth.signOut(); setSession(null); };
+
+  if (!CONFIGURATO) return html`<div className="gate"><div className="gate-box doc"><h2>Manca la configurazione</h2>
+    <p style=${{ marginTop: '8px' }}>In testa al file index.html vanno inseriti l'URL del progetto Supabase e la chiave publishable.</p></div></div>`;
+  if (session === undefined) return html`<${Loading}/>`;
+  if (!session) return html`<${Login}/>`;
+  if (!role) return html`<${Loading}/>`;
+  if (role.kind === 'error') return html`<div className="gate"><div className="gate-box doc"><h2>Qualcosa non va</h2><p style=${{ marginTop: '8px' }}>${role.msg}</p>
+    <div className="actions"><button className="btn" onClick=${resolve}>Riprova</button><button className="btn plain" onClick=${logout}>Esci</button></div></div></div>`;
+  if (role.kind === 'join') return html`<${Join} onDone=${resolve} onLogout=${logout}/>`;
+  if (role.kind === 'master') return html`<${Regia} user=${session.user} onLogout=${logout}/>`;
+  return html`<${MemberHome} user=${session.user} onLogout=${logout}/>`;
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(html`<${App}/>`);
+</script>
+</body>
+</html>
