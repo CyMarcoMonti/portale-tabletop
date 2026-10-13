@@ -80,6 +80,18 @@ p{margin:0}
 .st-inviato{color:var(--inviato)} .st-chiuso{color:var(--chiuso)} .st-aperto{color:var(--ink)}
 .placard{display:inline-block;background:var(--ink);color:#fff;font-stretch:75%;font-weight:700;font-size:12.5px;padding:1px 8px;border-radius:2px;letter-spacing:.01em}
 .tag{display:inline-block;background:var(--soft);border-radius:3px;padding:0 6px;font-size:12px;font-weight:600;color:var(--muted)}
+.tag.warn{background:#FCE8D2;color:#8A4B00}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+.chips label{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:#fff;font-size:13.5px;cursor:pointer}
+.chips label.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.chips label input{position:absolute;opacity:0;pointer-events:none}
+.chips label:focus-within{outline:2px solid var(--inviato);outline-offset:2px}
+.chips .grp{width:100%;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}
+.mode{display:grid;gap:8px;margin-top:12px}
+.mode label{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:var(--r);padding:10px 12px;cursor:pointer;background:#fff}
+.mode label.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.mode small{display:block;color:var(--muted);font-size:12.5px}
+.panel.info{border-left:5px solid var(--attesa)}
 
 /* fascicolo */
 .doc{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px 22px 20px;max-width:780px}
@@ -528,9 +540,12 @@ function Join({ onDone, onLogout }) {
 /* =====================================================================
    Flussi: elenco, dettaglio, nuova richiesta
    ===================================================================== */
+const splitDest = s => String(s || '').split(',').map(x => x.trim()).filter(Boolean);
 function routeOf(f, who, myTeam) {
   if (f.kind === 'situazione') return html`<span className="placard">${f.voce}</span><span className="arr">a</span><span>${who.teamName(f.to_team)}</span>`;
-  if (f.kind === 'esterna') return html`<span>${who.teamName(f.from_team)}</span><span className="arr">a</span><b>${f.destinatario}</b>`;
+  if (f.kind === 'esterna') return html`<span>${who.teamName(f.from_team)}</span><span className="arr">a</span><b>${f.destinatario}</b>
+    ${f.diretta ? html`<span className="tag warn">Senza autorizzazione</span>` : null}
+    ${f.diretta && f.to_team ? html`<span className="tag">${myTeam === f.to_team ? 'Per conoscenza' : 'Informata ' + who.teamName(f.to_team)}</span>` : null}`;
   if (myTeam && f.to_team === myTeam) return html`<span>Da ${who.teamName(f.from_team)}</span>`;
   if (myTeam) return html`<span>A ${who.teamName(f.to_team)}</span>`;
   return html`<span>${who.teamName(f.from_team)}</span><span className="arr">a</span><span>${who.teamName(f.to_team)}</span>`;
@@ -566,7 +581,7 @@ function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen
   const canWithdraw = part && f.stato === 'in_attesa' && mine;
   const canSend = part && isExt && f.stato === 'approvato' && mine;
   const canPost = part && ['approvato', 'aperto'].includes(f.stato) && (mine || toMe);
-  const canClose = !ro && (isMaster || mine || toMe) && ['approvato', 'aperto', 'inviato'].includes(f.stato);
+  const canClose = !ro && (isMaster || mine || (toMe && !f.diretta)) && ['approvato', 'aperto', 'inviato'].includes(f.stato);
   const canRetry = part && f.stato === 'respinto' && mine;
   const lastVoice = msgs.slice().reverse().find(m => m.voce);
   const altre = who.others(me.team);
@@ -598,12 +613,20 @@ function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen
           : html`<dt>Aperta da</dt><dd>${persona(f.opened_by, f.opened_ruolo)} alle ${ora(f.created_at)}${f.tempo_sim ? ' — ' + f.tempo_sim : ''}</dd>`}
         ${f.decided_at ? html`<dt>${decisioneLbl}</dt><dd>${f.stato === 'respinto' ? 'Respinta' : (isExt ? 'Autorizzata' : 'Approvata')} da ${persona(f.decided_by, f.decided_ruolo)} alle ${ora(f.decided_at)}${f.to_team ? ' (dopo ' + durata(f.created_at, f.decided_at) + ')' : ''}</dd>` : null}
         ${f.nota_decisione ? html`<dt>Nota</dt><dd>${f.nota_decisione}</dd>` : null}
+        ${f.diretta ? html`<dt>${decisioneLbl}</dt><dd><span className="tag warn">Nessuna: inviata direttamente</span></dd>` : null}
+        ${f.diretta ? html`<dt>Informata</dt><dd>${f.to_team ? who.teamName(f.to_team) : html`<span className="miss">nessuna squadra</span>`}</dd>` : null}
         ${f.inviato_at ? html`<dt>Inviata</dt><dd>da ${who.name(f.inviato_by)} alle ${ora(f.inviato_at)}</dd>` : null}
         ${f.closed_at ? html`<dt>Chiusa</dt><dd>da ${who.name(f.closed_by)} alle ${ora(f.closed_at)}</dd>` : null}
         ${f.rif && hasFlow && hasFlow(f.rif) ? html`<dt>Collegata a</dt><dd><button className="link" onClick=${() => onOpen(f.rif)}>apri il flusso precedente</button></dd>` : null}
       </dl>
       ${f.motivo ? html`<div className="body">${f.motivo}</div>` : null}
     </article>
+
+    ${f.diretta && toMe && !isMaster ? html`<section className="panel info">
+      <h3>Per conoscenza</h3>
+      <p className="hint">${who.teamName(f.from_team)} l'ha inviata direttamente a ${f.destinatario} alle ${ora(f.inviato_at)}, senza chiedere l'autorizzazione, e vi informa. Non dovete decidere nulla, ma potete rispondere.</p>
+      ${part ? html`<div className="actions"><button id="btn-reply-team" className="btn plain" onClick=${() => onCompose({ kind: 'canale', prefill: { to: f.from_team, tipo: tipoAgg, titolo: 'Re: ' + f.titolo, rif: f.id, testo: '' } })}>Rispondi a ${who.teamName(f.from_team)}</button></div>` : null}
+    </section>` : null}
 
     ${canDecide ? html`<section className="panel decide">
       <h3>${isExt ? 'Autorizzate questa comunicazione?' : 'Approvate questa richiesta?'}</h3>
@@ -662,12 +685,14 @@ function Msg({ m, who, isMaster }) {
 }
 
 function VoiceComposer({ f, cfg, who, ops }) {
-  const defVoce = f.kind === 'situazione' ? f.voce : f.kind === 'esterna' ? f.destinatario : cfg.voci[0];
+  const dests = f.kind === 'esterna' ? splitDest(f.destinatario) : [];
+  const defVoce = f.kind === 'situazione' ? f.voce : f.kind === 'esterna' ? (dests[0] || cfg.voci[0]) : cfg.voci[0];
   const defSolo = f.kind === 'esterna' ? (f.from_team || '') : '';
   const [voce, setVoce] = useState(defVoce);
   const [solo, setSolo] = useState(defSolo);
   useEffect(() => { setVoce(defVoce); setSolo(defSolo); }, [f.id]);
-  const voci = Array.from(new Set([defVoce].concat(cfg.voci).filter(Boolean)));
+  // con più destinatari si risponde come ciascuno di loro, uno alla volta
+  const voci = Array.from(new Set([defVoce].concat(dests, cfg.voci).filter(Boolean)));
   return html`<section className="panel regia">
     <h3>Rispondi come una voce</h3>
     <p className="hint">Il messaggio arriva con il cartello della voce scelta. ${f.kind === 'esterna' ? 'Un avviso vago genera domande; una notifica incompleta torna indietro con richieste di integrazione.' : ''}</p>
@@ -706,42 +731,79 @@ function Compose({ kind, prefill, cfg, me, who, ops, onDone, onCancel }) {
   prefill = prefill || {};
   const isExt = kind === 'esterna';
   const tipi = (isExt ? cfg.comunicazioni.map(c => c.tipo) : cfg.tipi_canale).concat(['Altro']);
-  const knownDest = d => cfg.destinatari.includes(d);
+  // destinatari possibili: gli esterni e tutte le voci interpretate dal facilitatore (anche quelle sbagliate)
+  const vociSim = cfg.voci.filter(v => v !== 'Facilitatore' && !cfg.destinatari.includes(v));
+  const attori = cfg.destinatari.concat(vociSim);
+  const pre = splitDest(prefill.destinatario);
   const [tipo, setTipo] = useState(prefill.tipo || '');
   const [titolo, setTitolo] = useState(prefill.titolo || '');
   const [testo, setTesto] = useState(prefill.testo || '');
-  const [dest, setDest] = useState(prefill.destinatario ? (knownDest(prefill.destinatario) ? prefill.destinatario : '__altro') : '');
-  const [destFree, setDestFree] = useState(prefill.destinatario && !knownDest(prefill.destinatario) ? prefill.destinatario : '');
+  const [destSel, setDestSel] = useState(pre.filter(x => attori.includes(x)));
+  const [destFree, setDestFree] = useState(pre.filter(x => !attori.includes(x)).join(', '));
   const [busy, setBusy] = useState(false);
   const myTeam = who.team(me.team) || {};
   const selfAuth = isExt && myTeam.autorizza;
   // squadre a cui si può mandare: per le richieste tutte le altre, per le esterne quelle che autorizzano
   const targets = isExt ? (selfAuth ? [] : who.authorizers(me.team)) : who.others(me.team);
-  const [toTeam, setToTeam] = useState(targets.length === 1 ? targets[0].id : '');
+  const [toTeam, setToTeam] = useState(prefill.to && targets.some(t => t.id === prefill.to) ? prefill.to : targets.length === 1 ? targets[0].id : '');
   const other = who.team(toTeam) || { nome: isExt ? 'la squadra che autorizza' : 'l\'altra squadra' };
   const noAuth = isExt && !selfAuth && !targets.length;
+  // invio diretto, senza autorizzazione, con eventuale squadra da informare
+  const [modo, setModo] = useState(noAuth ? 'diretta' : 'autorizza');
+  const diretta = isExt && modo === 'diretta';
+  const informabili = who.others(me.team);
+  const defInforma = (who.authorizers(me.team)[0] || informabili[0] || {}).id || '';
+  const [informa, setInforma] = useState(!!defInforma);
+  const [informaTeam, setInformaTeam] = useState(defInforma);
+  const toggleDest = x => setDestSel(destSel.includes(x) ? destSel.filter(y => y !== x) : destSel.concat([x]));
   const pickTipo = v => {
     if (!titolo || tipi.includes(titolo)) setTitolo(v === 'Altro' ? '' : v);
     setTipo(v);
-    if (isExt) { const c = cfg.comunicazioni.find(x => x.tipo === v); if (c && knownDest(c.destinatario)) setDest(c.destinatario); }
+    if (isExt) { const c = cfg.comunicazioni.find(x => x.tipo === v); if (c && attori.includes(c.destinatario) && !destSel.includes(c.destinatario)) setDestSel(destSel.concat([c.destinatario])); }
   };
-  const destinatario = dest === '__altro' ? destFree.trim() : dest;
-  const ok = titolo.trim() && testo.trim() && (!isExt || destinatario) && (selfAuth || toTeam) && !noAuth;
+  const destinatari = Array.from(new Set(destSel.concat(splitDest(destFree))));
+  const destinatario = destinatari.join(', ');
+  const ok = titolo.trim() && testo.trim() && (!isExt || destinatari.length) &&
+    (diretta ? (!informa || informaTeam) : ((selfAuth || toTeam) && !noAuth));
   const submit = async () => {
+    if (diretta && !window.confirm('Inviare subito a ' + destinatario + ', senza autorizzazione? Non si potrà più modificare.')) return;
     setBusy(true);
-    const r = await ops.run(sb.rpc('open_flow', { p_kind: kind, p_tipo: tipo, p_titolo: titolo, p_testo: testo,
-      p_destinatario: isExt ? destinatario : null, p_rif: prefill.rif || null, p_to: selfAuth ? null : toTeam }), ['flows'],
-      isExt ? (selfAuth ? 'Pronta: ora potete inviarla' : 'Mandata a ' + other.nome + ' per l\'autorizzazione') : 'Richiesta mandata a ' + other.nome);
+    let r;
+    if (diretta) {
+      const inf = informa ? informaTeam : null;
+      r = await ops.run(sb.rpc('send_direct', { p_tipo: tipo, p_titolo: titolo, p_testo: testo, p_destinatario: destinatario,
+        p_informa: inf, p_rif: prefill.rif || null }), ['flows'],
+        'Inviata a ' + destinatario + (inf ? '; informata ' + who.teamName(inf) : ''));
+    } else {
+      r = await ops.run(sb.rpc('open_flow', { p_kind: kind, p_tipo: tipo, p_titolo: titolo, p_testo: testo,
+        p_destinatario: isExt ? destinatario : null, p_rif: prefill.rif || null, p_to: selfAuth ? null : toTeam }), ['flows'],
+        isExt ? (selfAuth ? 'Pronta: ora potete inviarla' : 'Mandata a ' + other.nome + ' per l\'autorizzazione') : 'Richiesta mandata a ' + other.nome);
+    }
     setBusy(false);
     if (!r.error) onDone(r.data);
   };
+  const chip = x => html`<label key=${x} className=${destSel.includes(x) ? 'on' : ''}><input type="checkbox" checked=${destSel.includes(x)} onChange=${() => toggleDest(x)}/>${x}</label>`;
   return html`<div className="doc" id="compose" style=${{ maxWidth: '780px' }}>
     <div className="doc-top"><span>${isExt ? 'Nuova comunicazione esterna' : 'Nuova richiesta a ' + other.nome}</span></div>
-    <p className="hint" style=${{ marginTop: '6px' }}>${noAuth ? 'Nessuna squadra è impostata per autorizzare le comunicazioni esterne: avvisa il facilitatore.' : isExt
-      ? (selfAuth ? 'La firmate voi: sarà autorizzata subito e la potrete inviare. Resta visibile solo alla vostra squadra.'
-                  : 'Prima di partire la deve autorizzare ' + other.nome + '. Scrivetela come la leggerà il destinatario.')
+    <p className="hint" style=${{ marginTop: '6px' }}>${isExt
+      ? 'Scrivetela come la leggerà il destinatario: risponde in base a ciò che legge.'
       : (toTeam ? other.nome : 'La squadra che scegliete') + ' la riceve e decide se approvarla. Dopo la decisione potete scrivervi nel flusso.'}</p>
-    ${targets.length > 1 ? html`<${Field} label=${isExt ? 'Chi la autorizza' : 'A quale squadra'}>
+    ${isExt ? html`<div className="mode" role="radiogroup" aria-label="Come inviarla">
+      <label className=${modo === 'autorizza' ? 'on' : ''}><input type="radio" name="modo" checked=${modo === 'autorizza'} disabled=${noAuth} onChange=${() => setModo('autorizza')}/>
+        <span><b>${selfAuth ? 'Firmatela voi' : 'Chiedi l\'autorizzazione'}</b><small>${noAuth ? 'Nessuna squadra è impostata per autorizzare: avvisa il facilitatore.'
+          : selfAuth ? 'Sarà autorizzata subito e la potrete inviare. Resta visibile solo alla vostra squadra.'
+          : 'Prima di partire la deve autorizzare ' + other.nome + '.'}</small></span></label>
+      <label className=${modo === 'diretta' ? 'on' : ''}><input id="compose-diretta" type="radio" name="modo" checked=${modo === 'diretta'} onChange=${() => setModo('diretta')}/>
+        <span><b>Invia subito, senza autorizzazione</b><small>Per urgenze o compiti delegati. Parte subito, non si modifica più e resta agli atti come inviata senza autorizzazione.</small></span></label>
+    </div>` : null}
+    ${diretta && informabili.length ? html`<div className="actions">
+      <label style=${{ display: 'flex', gap: '8px', alignItems: 'center' }}><input id="compose-informa" type="checkbox" checked=${informa} onChange=${e => setInforma(e.target.checked)}/> Informa anche</label>
+      ${informabili.length > 1
+        ? html`<select id="compose-informa-team" style=${{ width: 'auto' }} disabled=${!informa} value=${informaTeam} onChange=${e => setInformaTeam(e.target.value)}>${informabili.map(t => html`<option key=${t.id} value=${t.id}>${t.nome}</option>`)}</select>`
+        : html`<b>${informabili[0].nome}</b>`}
+      <span className="hint">La vede con l'avviso, senza doverla approvare.</span>
+    </div>` : null}
+    ${!diretta && targets.length > 1 ? html`<${Field} label=${isExt ? 'Chi la autorizza' : 'A quale squadra'}>
       <select id="compose-to" value=${toTeam} onChange=${e => setToTeam(e.target.value)}>
         <option value="">Scegli…</option>${targets.map(t => html`<option key=${t.id} value=${t.id}>${t.nome}</option>`)}
       </select><//>` : null}
@@ -751,19 +813,22 @@ function Compose({ kind, prefill, cfg, me, who, ops, onDone, onCancel }) {
           <option value="">Scegli…</option>${tipi.map(t => html`<option key=${t}>${t}</option>`)}
           ${tipo && !tipi.includes(tipo) ? html`<option>${tipo}</option>` : null}
         </select><//>
-      ${isExt ? html`<${Field} label="Destinatario">
-        <select id="compose-dest" value=${dest} onChange=${e => setDest(e.target.value)}>
-          <option value="">Scegli…</option>${cfg.destinatari.map(t => html`<option key=${t}>${t}</option>`)}<option value="__altro">Altro…</option>
-        </select>
-        ${dest === '__altro' ? html`<input type="text" style=${{ marginTop: '6px' }} placeholder="Chi riceve la comunicazione" value=${destFree} onChange=${e => setDestFree(e.target.value)}/>` : null}
-      <//>` : html`<div></div>`}
+      <div></div>
     </div>
+    ${isExt ? html`<div className="field" role="group" aria-label="Destinatari">
+      <span className="lab">Destinatari${destinatari.length ? ' · ' + destinatari.length : ''}</span>
+      <div className="chips">
+        <span className="grp">Esterni</span>${cfg.destinatari.map(chip)}
+        ${vociSim.length ? html`<span className="grp">Altri attori simulati</span>${vociSim.map(chip)}` : null}
+      </div>
+      <input id="compose-dest-altri" type="text" style=${{ marginTop: '8px' }} placeholder="Altri destinatari, separati da virgola" value=${destFree} onChange=${e => setDestFree(e.target.value)}/>
+    </div>` : null}
     <${Field} label="Oggetto"><input id="compose-titolo" type="text" value=${titolo} onChange=${e => setTitolo(e.target.value)}/><//>
     <${Field} label=${isExt ? 'Testo della comunicazione' : 'Testo'}
       hint=${isExt ? 'Sarà letta per tempestività, chiarezza, completezza, coerenza e correttezza di destinatario e firma.' : null}>
       <textarea id="compose-testo" className=${isExt ? 'big' : ''} value=${testo} onChange=${e => setTesto(e.target.value)}></textarea><//>
     <div className="actions">
-      <button id="compose-go" className="btn" disabled=${!ok || busy} onClick=${submit}>${isExt ? (selfAuth ? 'Salva e firma' : 'Manda per l\'autorizzazione') : 'Manda la richiesta'}</button>
+      <button id="compose-go" className="btn" disabled=${!ok || busy} onClick=${submit}>${isExt ? (diretta ? 'Invia subito' : selfAuth ? 'Salva e firma' : 'Manda per l\'autorizzazione') : 'Manda la richiesta'}</button>
       <button className="btn plain" onClick=${onCancel}>Annulla</button>
     </div>
   </div>`;
@@ -1218,7 +1283,7 @@ function Debriefing({ d, cfg, who, goFlow }) {
       <div className="tbl-wrap"><table><thead><tr><th>Comunicazione</th><th>Destinatario</th><th>Termine</th><th>Fase prevista</th><th>Preparata</th><th>Autorizzata</th><th>Inviata</th><th>Versioni</th><th>Media</th></tr></thead><tbody>
         ${previste.map(p => html`<tr key=${p.c.tipo}><td>${p.c.tipo}</td><td>${p.c.destinatario}</td><td>${p.c.termine}</td><td>${p.c.fase}</td>
           <td className="n">${p.prep ? html`<button className="link" onClick=${() => goFlow(p.prep.id)}>${conFase(p.prep.created_at)}</button>` : html`<span className="miss">mai</span>`}</td>
-          <td className="n">${p.aut ? conFase(p.aut.decided_at) : ''}</td>
+          <td className="n">${p.aut ? conFase(p.aut.decided_at) : (p.inv && p.inv.diretta ? html`<span className="tag warn">senza autorizzazione</span>` : '')}</td>
           <td className="n">${p.inv ? conFase(p.inv.inviato_at) : (p.prep && p.prep.kind === 'esterna' ? html`<span className="miss">non inviata</span>` : '')}</td>
           <td>${p.fs.length || ''}</td><td>${p.media}</td></tr>`)}
       </tbody></table></div>
