@@ -166,10 +166,10 @@ th,td{text-align:left;padding:7px 10px;border-bottom:1px solid var(--soft);verti
 th{font-weight:700;background:var(--hover);white-space:nowrap}
 td.n{white-space:nowrap}
 .miss{color:var(--no);font-weight:600}
-.cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:18px}
 .col h3{padding-bottom:6px;border-bottom:3px solid var(--c)}
 .section{margin-top:30px}
-.people{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:12px}
+.people{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;margin-top:12px}
 .person{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--soft)}
 
 /* accesso */
@@ -239,7 +239,7 @@ function normCfg(c) {
   const r = c.ruoli && typeof c.ruoli === 'object' ? c.ruoli : {};
   return {
     titolo: String(c.titolo || DEFAULT_CFG.titolo),
-    ruoli: { A: strList(r.A, []), B: strList(r.B, []) },
+    ruoli: Object.fromEntries(Object.keys(r).map(k => [k, strList(r[k], [])])),
     tipi_canale: strList(c.tipi_canale, DEFAULT_CFG.tipi_canale),
     comunicazioni: Array.isArray(c.comunicazioni)
       ? c.comunicazioni.filter(x => x && x.tipo).map(x => ({
@@ -315,11 +315,16 @@ const CRITERI = [['tempestivita', 'Tempestività'], ['chiarezza', 'Chiarezza'], 
 function makeWho(d) {
   const byId = {}; d.members.forEach(m => { byId[m.user_id] = m; });
   const team = id => d.teams.find(t => t.id === id);
+  const teams = d.teams.slice().sort((a, b) => (a.ordine || 0) - (b.ordine || 0) || a.id.localeCompare(b.id));
   return {
     member: id => byId[id],
     name: id => (byId[id] && byId[id].nome) || 'Facilitatore',
     team,
-    teamName: id => (team(id) && team(id).nome) || (id === 'A' ? 'Squadra A' : id === 'B' ? 'Squadra B' : 'Regia'),
+    teams,
+    ids: teams.map(t => t.id),
+    others: id => teams.filter(t => t.id !== id),
+    authorizers: id => teams.filter(t => t.autorizza && t.id !== id),
+    teamName: id => (team(id) && team(id).nome) || (id ? 'Squadra ' + id : 'Regia'),
     teamColor: id => (team(id) && team(id).colore) || '#5A6576',
   };
 }
@@ -340,11 +345,11 @@ function faseAt(fasi, ts) {
 
 /* ---------- dati condivisi + tempo reale ---------- */
 const T_ALL = ['campaign', 'campaign_fasi', 'teams', 'members', 'flows', 'messages', 'registro'];
-const T_MASTER = ['settings', 'copione', 'valutazioni', 'fiducia', 'flow_events'];
+const T_MASTER = ['settings', 'team_codes', 'copione', 'valutazioni', 'fiducia', 'flow_events'];
 const SINGLE = { campaign: 1, settings: 1 };
 
 function useData(isMaster) {
-  const [d, setD] = useState({ loaded: false, campaign: null, settings: null, campaign_fasi: [], teams: [], members: [],
+  const [d, setD] = useState({ loaded: false, campaign: null, settings: null, team_codes: [], campaign_fasi: [], teams: [], members: [],
     flows: [], messages: [], registro: [], copione: [], valutazioni: [], fiducia: [], flow_events: [] });
   const [err, setErr] = useState('');
   const load = useCallback(async t => {
@@ -564,7 +569,8 @@ function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen
   const canClose = !ro && (isMaster || mine || toMe) && ['approvato', 'aperto', 'inviato'].includes(f.stato);
   const canRetry = part && f.stato === 'respinto' && mine;
   const lastVoice = msgs.slice().reverse().find(m => m.voce);
-  const altro = me.team === 'A' ? 'B' : 'A';
+  const altre = who.others(me.team);
+  const portaLbl = altre.length === 1 ? 'Porta a ' + altre[0].nome : 'Porta a un\'altra squadra';
   const tipoAgg = cfg.tipi_canale.find(t => /aggiorn/i.test(t)) || cfg.tipi_canale[0] || '';
   const tipoEsc = cfg.tipi_canale.find(t => /escalation/i.test(t)) || cfg.tipi_canale[0] || '';
 
@@ -624,7 +630,7 @@ function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen
 
     ${(canRetry || (part && (f.kind === 'situazione' || (isExt && f.stato === 'inviato' && mine && lastVoice)))) ? html`<div className="actions" style=${{ maxWidth: '780px' }}>
       ${canRetry ? html`<button id="btn-retry" className="btn plain" onClick=${() => onCompose({ kind: f.kind, prefill: { tipo: f.tipo, titolo: f.titolo, testo: f.motivo, destinatario: f.destinatario, rif: f.id } })}>Riproponi con modifiche</button>` : null}
-      ${part && (f.kind === 'situazione' || (isExt && f.stato === 'inviato' && mine && lastVoice)) ? html`<button id="btn-forward" className="btn plain" onClick=${forward}>Porta a ${who.teamName(altro)}</button>` : null}
+      ${part && (f.kind === 'situazione' || (isExt && f.stato === 'inviato' && mine && lastVoice)) ? html`<button id="btn-forward" className="btn plain" onClick=${forward}>${portaLbl}</button>` : null}
     </div>` : null}
 
     <section className="thread">
@@ -708,29 +714,37 @@ function Compose({ kind, prefill, cfg, me, who, ops, onDone, onCancel }) {
   const [destFree, setDestFree] = useState(prefill.destinatario && !knownDest(prefill.destinatario) ? prefill.destinatario : '');
   const [busy, setBusy] = useState(false);
   const myTeam = who.team(me.team) || {};
-  const other = who.team(me.team === 'A' ? 'B' : 'A') || {};
   const selfAuth = isExt && myTeam.autorizza;
+  // squadre a cui si può mandare: per le richieste tutte le altre, per le esterne quelle che autorizzano
+  const targets = isExt ? (selfAuth ? [] : who.authorizers(me.team)) : who.others(me.team);
+  const [toTeam, setToTeam] = useState(targets.length === 1 ? targets[0].id : '');
+  const other = who.team(toTeam) || { nome: isExt ? 'la squadra che autorizza' : 'l\'altra squadra' };
+  const noAuth = isExt && !selfAuth && !targets.length;
   const pickTipo = v => {
     if (!titolo || tipi.includes(titolo)) setTitolo(v === 'Altro' ? '' : v);
     setTipo(v);
     if (isExt) { const c = cfg.comunicazioni.find(x => x.tipo === v); if (c && knownDest(c.destinatario)) setDest(c.destinatario); }
   };
   const destinatario = dest === '__altro' ? destFree.trim() : dest;
-  const ok = titolo.trim() && testo.trim() && (!isExt || destinatario);
+  const ok = titolo.trim() && testo.trim() && (!isExt || destinatario) && (selfAuth || toTeam) && !noAuth;
   const submit = async () => {
     setBusy(true);
     const r = await ops.run(sb.rpc('open_flow', { p_kind: kind, p_tipo: tipo, p_titolo: titolo, p_testo: testo,
-      p_destinatario: isExt ? destinatario : null, p_rif: prefill.rif || null }), ['flows'],
+      p_destinatario: isExt ? destinatario : null, p_rif: prefill.rif || null, p_to: selfAuth ? null : toTeam }), ['flows'],
       isExt ? (selfAuth ? 'Pronta: ora potete inviarla' : 'Mandata a ' + other.nome + ' per l\'autorizzazione') : 'Richiesta mandata a ' + other.nome);
     setBusy(false);
     if (!r.error) onDone(r.data);
   };
   return html`<div className="doc" id="compose" style=${{ maxWidth: '780px' }}>
     <div className="doc-top"><span>${isExt ? 'Nuova comunicazione esterna' : 'Nuova richiesta a ' + other.nome}</span></div>
-    <p className="hint" style=${{ marginTop: '6px' }}>${isExt
+    <p className="hint" style=${{ marginTop: '6px' }}>${noAuth ? 'Nessuna squadra è impostata per autorizzare le comunicazioni esterne: avvisa il facilitatore.' : isExt
       ? (selfAuth ? 'La firmate voi: sarà autorizzata subito e la potrete inviare. Resta visibile solo alla vostra squadra.'
                   : 'Prima di partire la deve autorizzare ' + other.nome + '. Scrivetela come la leggerà il destinatario.')
-      : other.nome + ' la riceve e decide se approvarla. Dopo la decisione potete scrivervi nel flusso.'}</p>
+      : (toTeam ? other.nome : 'La squadra che scegliete') + ' la riceve e decide se approvarla. Dopo la decisione potete scrivervi nel flusso.'}</p>
+    ${targets.length > 1 ? html`<${Field} label=${isExt ? 'Chi la autorizza' : 'A quale squadra'}>
+      <select id="compose-to" value=${toTeam} onChange=${e => setToTeam(e.target.value)}>
+        <option value="">Scegli…</option>${targets.map(t => html`<option key=${t.id} value=${t.id}>${t.nome}</option>`)}
+      </select><//>` : null}
     <div className="grid2">
       <${Field} label=${isExt ? 'Tipo di comunicazione' : 'Tipo di richiesta'}>
         <select id="compose-tipo" value=${tipo} onChange=${e => pickTipo(e.target.value)}>
@@ -888,7 +902,7 @@ function Registro({ d, me, who, ops }) {
   const entries = d.registro.filter(r => r.team_id === me.team).sort((a, b) => byTime(b, a));
   return html`<div className="page" id="registro">
     <h2>Registro delle decisioni</h2>
-    <p className="hint" style=${{ marginTop: '4px', maxWidth: '68ch' }}>Ogni voce resta agli atti con orario, tempo simulato e autore, e non si modifica. Nella discussione finale i due registri vengono messi uno accanto all'altro. Per correggere, aggiungi una nuova voce.</p>
+    <p className="hint" style=${{ marginTop: '4px', maxWidth: '68ch' }}>Ogni voce resta agli atti con orario, tempo simulato e autore, e non si modifica. Nella discussione finale i registri delle squadre vengono messi uno accanto all'altro. Per correggere, aggiungi una nuova voce.</p>
     ${!me.preview ? html`<div style=${{ maxWidth: '780px' }}><${Composer} id="reg-text" label="Aggiungi al registro"
       placeholder="Cosa è stato deciso, da chi e perché…" onSend=${t => ops.run(sb.rpc('add_registro', { p_testo: t }), ['registro'], 'Aggiunta al registro')}/></div>` : null}
     <ol className="reg">${entries.map(r => html`<li key=${r.id}>
@@ -929,15 +943,16 @@ function Regia({ user, onLogout }) {
   const [sel, setSel] = useState(null);
   const [filtro, setFiltro] = useState('gestire');
   const [prevTeam, setPrevTeam] = useState('A');
-  const [vista, setVista] = useState(null);   // null = regia; 'A' / 'B' = vista partecipanti a tutto schermo
+  const [vista, setVista] = useState(null);   // null = regia; id squadra = vista partecipanti a tutto schermo
   useEffect(() => { lsSet('rtab', tab); }, [tab]);
   if (!d.loaded) return html`<${Loading}/>`;
   const cfg = normCfg(d.campaign && d.campaign.config);
   const who = makeWho(d);
-  if (vista) return html`<div className="app">
+  const pt = who.ids.includes(prevTeam) ? prevTeam : who.ids[0];
+  if (vista && who.team(vista)) return html`<div className="app">
     <${Room} key=${vista} d=${d} ops=${ops} me=${{ id: 'anteprima', team: vista, preview: true }} extra=${html`
       <span className="preview-tag">Vista partecipanti · sola lettura</span>
-      ${['A', 'B'].map(t => html`<button key=${t} className="btn-light" aria-pressed=${vista === t} onClick=${() => setVista(t)}>${who.teamName(t)}</button>`)}
+      ${who.ids.map(t => html`<button key=${t} className="btn-light" aria-pressed=${vista === t} onClick=${() => setVista(t)}>${who.teamName(t)}</button>`)}
       <button id="btn-back-regia" className="btn-light" onClick=${() => setVista(null)}>Torna alla regia</button>`}/>
   </div>`;
   const byFlow = groupMsgs(d.messages);
@@ -979,16 +994,16 @@ function Regia({ user, onLogout }) {
   else if (tab === 'anteprima') body = html`<div>
       <div className="list-head" style=${{ justifyContent: 'flex-start', background: 'var(--paper)' }}>
         <span className="hint">Vedi quello che vede la squadra, in sola lettura:</span>
-        <div className="seg">${['A', 'B'].map(t => html`<button key=${t} aria-pressed=${prevTeam === t} onClick=${() => setPrevTeam(t)}>${who.teamName(t)}</button>`)}</div>
+        <div className="seg">${who.ids.map(t => html`<button key=${t} aria-pressed=${pt === t} onClick=${() => setPrevTeam(t)}>${who.teamName(t)}</button>`)}</div>
       </div>
-      <${Room} key=${prevTeam} d=${d} ops=${ops} me=${{ id: 'anteprima', team: prevTeam, preview: true }}/>
+      ${pt ? html`<${Room} key=${pt} d=${d} ops=${ops} me=${{ id: 'anteprima', team: pt, preview: true }}/>` : html`<p className="empty" style=${{ padding: '16px' }}>Nessuna squadra: aggiungine una da Impostazioni.</p>`}
     </div>`;
   else if (tab === 'partecipanti') body = html`<${Partecipanti} d=${d} cfg=${cfg} who=${who} ops=${ops}/>`;
   else if (tab === 'impostazioni') body = html`<${Impostazioni} d=${d} cfg=${cfg} ops=${ops} load=${load}/>`;
 
   return html`<div className="app">
     <${Band} color="#152030" title="Regia" sub=${cfg.titolo} campaign=${d.campaign}>
-      <button id="btn-vista-partecipanti" className="btn-light" onClick=${() => setVista(prevTeam)}>Vista partecipanti<small>come la vede una squadra</small></button>
+      <button id="btn-vista-partecipanti" className="btn-light" disabled=${!pt} onClick=${() => setVista(pt)}>Vista partecipanti<small>come la vede una squadra</small></button>
       <button className="btn-light" onClick=${onLogout}>Esci</button>
     <//>
     ${err ? html`<div className="notice" role="alert">${err}</div>` : null}
@@ -1037,16 +1052,17 @@ function Sessione({ d, cfg, who, ops, gestire, goFlow }) {
   </div>`;
 }
 
-const EMPTY_SIT = { fase: '', ordine: 0, titolo: '', voce: '', team_id: 'B', testo: '', condizione: '', note: '' };
+const EMPTY_SIT = { fase: '', ordine: 0, titolo: '', voce: '', team_id: '', testo: '', condizione: '', note: '' };
 function SituazioneForm({ init, cfg, who, onSave, onSend, onCancel }) {
-  const [s, setS] = useState({ ...EMPTY_SIT, fase: cfg.fasi[0] ? cfg.fasi[0].nome : '', voce: cfg.voci[0], ...init });
+  const defTeam = (who.teams.find(t => !t.autorizza) || who.teams[0] || {}).id || '';
+  const [s, setS] = useState({ ...EMPTY_SIT, team_id: defTeam, fase: cfg.fasi[0] ? cfg.fasi[0].nome : '', voce: cfg.voci[0], ...init });
   const set = k => e => setS({ ...s, [k]: e.target.value });
   const ok = s.titolo.trim() && s.testo.trim() && s.voce.trim();
   return html`<div className="card" id="sit-form" style=${{ '--c': who.teamColor(s.team_id) }}>
     <div className="grid2">
       <${Field} label="Fase"><select value=${s.fase} onChange=${set('fase')}>${cfg.fasi.map(f => html`<option key=${f.nome}>${f.nome}</option>`)}
         ${s.fase && !cfg.fasi.some(f => f.nome === s.fase) ? html`<option>${s.fase}</option>` : null}</select><//>
-      <${Field} label="Arriva a"><select id="sit-team" value=${s.team_id} onChange=${set('team_id')}>${['A', 'B'].map(t => html`<option key=${t} value=${t}>${who.teamName(t)}</option>`)}</select><//>
+      <${Field} label="Arriva a"><select id="sit-team" value=${s.team_id} onChange=${set('team_id')}>${who.ids.map(t => html`<option key=${t} value=${t}>${who.teamName(t)}</option>`)}</select><//>
       <${Field} label="Voce"><input id="sit-voce" type="text" list="voci-list" value=${s.voce} onChange=${set('voce')}/>
         <datalist id="voci-list">${cfg.voci.map(v => html`<option key=${v} value=${v}/>`)}</datalist><//>
       <${Field} label="Ordine nella fase"><input type="number" value=${s.ordine} onChange=${e => setS({ ...s, ordine: parseInt(e.target.value, 10) || 0 })}/><//>
@@ -1209,7 +1225,7 @@ function Debriefing({ d, cfg, who, goFlow }) {
     </div>
 
     <div className="section"><h3>Registri a confronto</h3>
-      <div className="cols">${['A', 'B'].map(t => html`<div key=${t} className="col" style=${{ '--c': who.teamColor(t) }}><h3>${who.teamName(t)}</h3>
+      <div className="cols">${who.ids.map(t => html`<div key=${t} className="col" style=${{ '--c': who.teamColor(t) }}><h3>${who.teamName(t)}</h3>
         <ol className="reg" style=${{ marginTop: '0' }}>${d.registro.filter(r => r.team_id === t).sort(byTime).map(r => html`<li key=${r.id} style=${{ gridTemplateColumns: '70px 1fr' }}>
           <div><time>${ora(r.created_at)}</time><span className="sim">${r.tempo_sim || ''}</span></div>
           <div><div className="x">${r.testo}</div><div className="by">${who.name(r.author)}${r.ruolo ? ', ' + r.ruolo : ''}</div></div></li>`)}</ol>
@@ -1234,7 +1250,7 @@ function Debriefing({ d, cfg, who, goFlow }) {
     </div>
 
     <div className="section"><h3>Cronologia completa</h3>
-      <div className="seg" style=${{ marginTop: '8px' }}>${[['tutto', 'Tutto'], ['A', who.teamName('A')], ['B', who.teamName('B')], ['regia', 'Voci']].map(([k, l]) => html`<button key=${k} aria-pressed=${vedi === k} onClick=${() => setVedi(k)}>${l}</button>`)}</div>
+      <div className="seg" style=${{ marginTop: '8px' }}>${[['tutto', 'Tutto']].concat(who.teams.map(t => [t.id, t.nome]), [['regia', 'Voci']]).map(([k, l]) => html`<button key=${k} aria-pressed=${vedi === k} onClick=${() => setVedi(k)}>${l}</button>`)}</div>
       <div className="tbl-wrap"><table><thead><tr><th>Ora</th><th>Fase</th><th>Evento</th><th>Chi</th><th>Flusso</th><th>Testo</th></tr></thead><tbody>
         ${filt.map((r, i) => html`<tr key=${i}><td className="n">${oraSec(r.t)}</td><td>${r.fase}</td><td>${r.cosa}</td><td>${r.chi}${r.ruolo ? html`<br/><span className="hint">${r.ruolo}</span>` : null}<br/><span className="hint">${r.squadra}</span></td>
           <td>${r.flusso}${r.verso ? html`<br/><span className="hint">a ${r.verso}</span>` : null}</td><td className="x">${r.testo}</td></tr>`)}
@@ -1245,18 +1261,23 @@ function Debriefing({ d, cfg, who, goFlow }) {
 
 function Partecipanti({ d, cfg, who, ops }) {
   const upd = (id, patch, msg) => ops.run(sb.from('members').update(patch).eq('user_id', id), ['members'], msg);
+  const codice = t => (d.team_codes.find(c => c.team_id === t) || {}).code;
   return html`<div className="page">
     <h2>Partecipanti</h2>
-    <p className="hint" style=${{ marginTop: '4px' }}>${d.settings ? html`Codici: <b>${d.settings.code_a}</b> per ${who.teamName('A')}, <b>${d.settings.code_b}</b> per ${who.teamName('B')}.` : null} Puoi spostare una persona o correggerne il ruolo.</p>
-    <div className="people">${['A', 'B'].map(t => html`<div key=${t} className="col" style=${{ '--c': who.teamColor(t) }}>
+    <p className="hint" style=${{ marginTop: '4px' }}>Ognuno entra con il codice della propria squadra. Puoi spostare una persona o correggerne il ruolo.</p>
+    <div className="people">${who.ids.map(t => html`<div key=${t} className="col" style=${{ '--c': who.teamColor(t) }}>
       <h3>${who.teamName(t)}</h3>
+      <p className="hint">Codice: ${codice(t) ? html`<b>${codice(t)}</b>` : html`<span className="miss">nessuno, impostalo in Impostazioni</span>`}</p>
       ${d.members.filter(m => m.team_id === t).sort((a, b) => a.nome.localeCompare(b.nome)).map(m => html`<div key=${m.user_id} className="person">
         <b>${m.nome}</b>
         <select value=${m.ruolo} aria-label=${'Ruolo di ' + m.nome} onChange=${e => upd(m.user_id, { ruolo: e.target.value }, 'Ruolo aggiornato')}>
           <option value="">Nessun ruolo</option>${Array.from(new Set((cfg.ruoli[t] || []).concat(m.ruolo ? [m.ruolo] : []))).map(r => html`<option key=${r}>${r}</option>`)}
         </select>
         <span style=${{ display: 'flex', gap: '6px' }}>
-          <button className="btn plain small" onClick=${() => upd(m.user_id, { team_id: t === 'A' ? 'B' : 'A', ruolo: '' }, 'Spostata')}>Sposta</button>
+          <select className="btn plain small" style=${{ width: 'auto' }} value="" aria-label=${'Sposta ' + m.nome}
+            onChange=${e => { if (e.target.value) upd(m.user_id, { team_id: e.target.value, ruolo: '' }, 'Spostata in ' + who.teamName(e.target.value)); }}>
+            <option value="">Sposta in…</option>${who.others(t).map(o => html`<option key=${o.id} value=${o.id}>${o.nome}</option>`)}
+          </select>
           <button className="btn plain small" onClick=${() => { if (window.confirm('Togliere ' + m.nome + ' dalla simulazione? Potrà rientrare con il codice.')) ops.run(sb.from('members').delete().eq('user_id', m.user_id), ['members'], 'Tolta'); }}>Togli</button>
         </span>
       </div>`)}
@@ -1267,32 +1288,65 @@ function Partecipanti({ d, cfg, who, ops }) {
 
 const lines = a => a.join('\n');
 const unlines = s => s.split('\n').map(x => x.trim()).filter(Boolean);
+const COLORI_SQUADRA = ['#3B2F8F', '#0B6F6A', '#9A3412', '#1D4ED8', '#7E22CE', '#B45309', '#BE185D', '#15803D'];
 function Impostazioni({ d, cfg, ops, load }) {
-  const tA = d.teams.find(t => t.id === 'A') || {}, tB = d.teams.find(t => t.id === 'B') || {};
+  const who = makeWho(d);
+  const codeOf = id => (d.team_codes.find(c => c.team_id === id) || {}).code || '';
   const [f, setF] = useState(() => ({
     titolo: cfg.titolo,
-    nomeA: tA.nome || '', coloreA: tA.colore || '#3B2F8F', autA: !!tA.autorizza,
-    nomeB: tB.nome || '', coloreB: tB.colore || '#0B6F6A', autB: !!tB.autorizza,
-    codeA: d.settings ? d.settings.code_a : '', codeB: d.settings ? d.settings.code_b : '',
-    ruoliA: lines(cfg.ruoli.A), ruoliB: lines(cfg.ruoli.B), tipi: lines(cfg.tipi_canale), destinatari: lines(cfg.destinatari), voci: lines(cfg.voci),
+    tipi: lines(cfg.tipi_canale), destinatari: lines(cfg.destinatari), voci: lines(cfg.voci),
     fasi: lines(cfg.fasi.map(x => x.nome + (x.tempo ? ' | ' + x.tempo : ''))),
     comunicazioni: lines(cfg.comunicazioni.map(c => [c.tipo, c.destinatario, c.termine, c.fase].join(' | '))),
   }));
+  const [squadre, setSquadre] = useState(() => who.teams.map(t => ({
+    id: t.id, nome: t.nome || '', colore: t.colore || '#5A6576', autorizza: !!t.autorizza, code: codeOf(t.id), ruoli: lines(cfg.ruoli[t.id] || []) })));
   const set = k => e => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
+  const setSq = (i, k) => e => setSquadre(squadre.map((s, j) => j === i ? { ...s, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value } : s));
+  const aggiungi = () => {
+    const usati = new Set(squadre.map(s => s.id));
+    const id = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').find(c => !usati.has(c)) || ('T' + (squadre.length + 1));
+    setSquadre(squadre.concat([{ id, nome: 'Squadra ' + id, colore: COLORI_SQUADRA[squadre.length % COLORI_SQUADRA.length], autorizza: false, code: '', ruoli: '' }]));
+  };
+  const togli = i => {
+    const s = squadre[i];
+    const n = d.members.filter(m => m.team_id === s.id).length;
+    if (n) { ops.say(s.nome + ' ha ' + n + ' partecipanti: spostali in un\'altra squadra prima di toglierla.', 'err'); return; }
+    if (d.flows.some(x => x.from_team === s.id || x.to_team === s.id) || d.registro.some(r => r.team_id === s.id)) {
+      ops.say(s.nome + ' ha già flussi o voci di registro: azzera la simulazione prima di toglierla.', 'err'); return;
+    }
+    setSquadre(squadre.filter((_, j) => j !== i));
+  };
   const save = async () => {
+    const nomi = squadre.map(s => s.nome.trim());
+    if (!squadre.length) { ops.say('Serve almeno una squadra.', 'err'); return; }
+    if (nomi.some(n => !n)) { ops.say('Ogni squadra deve avere un nome.', 'err'); return; }
+    const codici = squadre.map(s => s.code.trim().toUpperCase()).filter(Boolean);
+    if (new Set(codici).size !== codici.length) { ops.say('Due squadre hanno lo stesso codice: ogni codice deve essere diverso.', 'err'); return; }
     const raw = d.campaign && d.campaign.config ? d.campaign.config : {};
-    const config = normCfg({ ...raw, titolo: f.titolo, ruoli: { A: unlines(f.ruoliA), B: unlines(f.ruoliB) }, tipi_canale: unlines(f.tipi),
+    const config = normCfg({ ...raw, titolo: f.titolo, ruoli: Object.fromEntries(squadre.map(s => [s.id, unlines(s.ruoli)])), tipi_canale: unlines(f.tipi),
       destinatari: unlines(f.destinatari), voci: unlines(f.voci),
       fasi: unlines(f.fasi).map(l => { const [nome, tempo] = l.split('|').map(x => x.trim()); return { nome, tempo: tempo || '' }; }),
       comunicazioni: unlines(f.comunicazioni).map(l => { const [tipo, destinatario, termine, fase] = l.split('|').map(x => (x || '').trim()); return { tipo, destinatario, termine, fase }; }) });
+    const tolte = d.teams.filter(t => !squadre.some(s => s.id === t.id)).map(t => t.id);
     const errs = [];
-    for (const p of [
+    const ops_ = [
       sb.from('campaign').update({ config }).eq('id', 1),
-      sb.from('teams').update({ nome: f.nomeA.trim(), colore: f.coloreA, autorizza: f.autA }).eq('id', 'A'),
-      sb.from('teams').update({ nome: f.nomeB.trim(), colore: f.coloreB, autorizza: f.autB }).eq('id', 'B'),
-      sb.from('settings').update({ code_a: f.codeA.trim(), code_b: f.codeB.trim() }).eq('id', 1),
-    ]) { const r = await ops.run(p); if (r.error) errs.push(r.error); }
-    ['campaign', 'teams', 'settings'].forEach(load);
+      sb.from('teams').upsert(squadre.map((s, i) => ({ id: s.id, nome: s.nome.trim(), colore: s.colore, autorizza: s.autorizza, ordine: i + 1 }))),
+    ];
+    // prima si liberano i codici cambiati, poi si scrivono quelli nuovi (il codice è unico tra le squadre)
+    const senzaCodice = squadre.filter(s => !s.code.trim()).map(s => s.id);
+    if (senzaCodice.length) ops_.push(sb.from('team_codes').delete().in('team_id', senzaCodice));
+    for (const p of ops_) { const r = await ops.run(p); if (r.error) errs.push(r.error); }
+    if (!errs.length && tolte.length) { const r = await ops.run(sb.from('teams').delete().in('id', tolte)); if (r.error) errs.push(r.error); }
+    if (!errs.length) {
+      const conCodice = squadre.filter(s => s.code.trim());
+      if (conCodice.length) {
+        const r0 = await ops.run(sb.from('team_codes').delete().in('team_id', conCodice.map(s => s.id)));
+        if (r0.error) errs.push(r0.error);
+        else { const r = await ops.run(sb.from('team_codes').insert(conCodice.map(s => ({ team_id: s.id, code: s.code.trim() })))); if (r.error) errs.push(r.error); }
+      }
+    }
+    ['campaign', 'teams', 'team_codes', 'settings'].forEach(load);
     if (!errs.length) ops.say('Impostazioni salvate');
   };
   const azzera = async () => {
@@ -1305,20 +1359,24 @@ function Impostazioni({ d, cfg, ops, load }) {
     T_ALL.concat(T_MASTER).forEach(load);
     ops.say('Simulazione azzerata');
   };
-  const team = (k, t) => html`<div className="card" style=${{ '--c': f['colore' + k] }}>
+  const team = (s, i) => html`<div key=${s.id} className="card" style=${{ '--c': s.colore }} data-team=${s.id}>
     <div className="grid2">
-      <${Field} label=${'Nome della squadra ' + k}><input type="text" value=${f['nome' + k]} onChange=${set('nome' + k)}/><//>
-      <${Field} label="Codice per entrare"><input type="text" value=${f['code' + k]} onChange=${set('code' + k)}/><//>
+      <${Field} label="Nome della squadra"><input type="text" value=${s.nome} onChange=${setSq(i, 'nome')}/><//>
+      <${Field} label="Codice per entrare" hint=${s.code.trim() ? null : 'Senza codice nessuno può entrare in questa squadra.'}><input type="text" value=${s.code} onChange=${setSq(i, 'code')}/><//>
     </div>
-    <div className="actions"><label style=${{ display: 'flex', gap: '8px', alignItems: 'center' }}><input type="color" value=${f['colore' + k]} onChange=${set('colore' + k)}/> Colore</label>
-      <label style=${{ display: 'flex', gap: '8px', alignItems: 'center' }}><input type="checkbox" checked=${f['aut' + k]} onChange=${set('aut' + k)}/> Autorizza le comunicazioni esterne</label></div>
-    <${Field} label="Ruoli del piano (uno per riga)"><textarea value=${f['ruoli' + k]} onChange=${set('ruoli' + k)}></textarea><//>
+    <div className="actions"><label style=${{ display: 'flex', gap: '8px', alignItems: 'center' }}><input type="color" value=${s.colore} onChange=${setSq(i, 'colore')}/> Colore</label>
+      <label style=${{ display: 'flex', gap: '8px', alignItems: 'center' }}><input type="checkbox" checked=${s.autorizza} onChange=${setSq(i, 'autorizza')}/> Autorizza le comunicazioni esterne</label>
+      <span style=${{ flex: 1 }}></span>
+      <button className="btn plain small" onClick=${() => togli(i)}>Togli la squadra</button></div>
+    <${Field} label="Ruoli del piano (uno per riga)"><textarea value=${s.ruoli} onChange=${setSq(i, 'ruoli')}></textarea><//>
   </div>`;
   return html`<div className="page">
     <h2>Impostazioni</h2>
     <${Field} label="Titolo della simulazione"><input type="text" value=${f.titolo} onChange=${set('titolo')}/><//>
-    <div className="cards" style=${{ marginTop: '14px' }}>${team('A')}${team('B')}</div>
-    <p className="hint" style=${{ marginTop: '8px' }}>La squadra che autorizza firma da sola le proprie comunicazioni esterne; quelle dell'altra squadra le deve autorizzare lei. L'email del facilitatore si cambia solo dall'SQL.</p>
+    <div className="section" style=${{ marginTop: '22px' }}><h3>Squadre · ${squadre.length}</h3></div>
+    <div className="cards">${squadre.map(team)}</div>
+    <div className="actions"><button id="btn-add-team" className="btn plain" onClick=${aggiungi}>+ Aggiungi una squadra</button></div>
+    <p className="hint" style=${{ marginTop: '8px' }}>Le comunicazioni esterne le autorizza una squadra con «Autorizza»; quelle che scrive lei le firma da sola. Le richieste tra le stanze vanno alla squadra che sceglie chi scrive. Le modifiche valgono dopo «Salva le impostazioni». L'email del facilitatore si cambia solo dall'SQL.</p>
     <div className="grid2">
       <${Field} label="Tipi di richiesta tra le stanze"><textarea value=${f.tipi} onChange=${set('tipi')}></textarea><//>
       <${Field} label="Destinatari esterni"><textarea value=${f.destinatari} onChange=${set('destinatari')}></textarea><//>
