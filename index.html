@@ -45,6 +45,8 @@ p{margin:0}
 .btn-light{background:transparent;border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:var(--r);padding:6px 11px;font-size:14px;text-align:left;line-height:1.2}
 .btn-light:hover{background:rgba(255,255,255,.12)}
 .btn-light small{display:block;opacity:.8;font-size:12px}
+.btn-light[aria-pressed=true]{background:#fff;color:var(--team,#152030);border-color:#fff;font-weight:700}
+.preview-tag{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px dashed rgba(255,255,255,.6);border-radius:3px;padding:3px 8px}
 
 /* schede */
 .tabs{display:flex;gap:2px;background:var(--paper);border-bottom:1px solid var(--line);padding:0 14px;overflow-x:auto}
@@ -767,7 +769,7 @@ function useSeen(key, flows, byFlow) {
   return { unread, mark };
 }
 
-function Room({ d, ops, me, onLogout }) {
+function Room({ d, ops, me, onLogout, extra }) {
   const cfg = normCfg(d.campaign && d.campaign.config);
   const who = makeWho(d);
   const team = who.team(me.team) || { nome: '', colore: '#152030' };
@@ -825,7 +827,7 @@ function Room({ d, ops, me, onLogout }) {
   return html`<div className="app">
     <${Band} color=${team.colore} title=${team.nome} sub=${me.preview ? 'Anteprima in sola lettura' : cfg.titolo} campaign=${d.campaign}>
       ${!me.preview ? html`<button className="btn-light" id="btn-profile" onClick=${() => setProfile(true)}>${me.nome}<small>${me.ruolo || 'Scegli il ruolo'}</small></button>
-        <button className="btn-light" onClick=${onLogout}>Esci</button>` : null}
+        <button className="btn-light" onClick=${onLogout}>Esci</button>` : extra || null}
     <//>
     ${!me.preview && !me.ruolo ? html`<div className="notice">Scegli il tuo ruolo del piano: comparirà accanto al tuo nome su richieste, decisioni e messaggi.
       <button className="btn small" onClick=${() => setProfile(true)}>Scegli il ruolo</button></div>` : null}
@@ -927,10 +929,17 @@ function Regia({ user, onLogout }) {
   const [sel, setSel] = useState(null);
   const [filtro, setFiltro] = useState('gestire');
   const [prevTeam, setPrevTeam] = useState('A');
+  const [vista, setVista] = useState(null);   // null = regia; 'A' / 'B' = vista partecipanti a tutto schermo
   useEffect(() => { lsSet('rtab', tab); }, [tab]);
   if (!d.loaded) return html`<${Loading}/>`;
   const cfg = normCfg(d.campaign && d.campaign.config);
   const who = makeWho(d);
+  if (vista) return html`<div className="app">
+    <${Room} key=${vista} d=${d} ops=${ops} me=${{ id: 'anteprima', team: vista, preview: true }} extra=${html`
+      <span className="preview-tag">Vista partecipanti · sola lettura</span>
+      ${['A', 'B'].map(t => html`<button key=${t} className="btn-light" aria-pressed=${vista === t} onClick=${() => setVista(t)}>${who.teamName(t)}</button>`)}
+      <button id="btn-back-regia" className="btn-light" onClick=${() => setVista(null)}>Torna alla regia</button>`}/>
+  </div>`;
   const byFlow = groupMsgs(d.messages);
   const needsMe = f => {
     const ms_ = byFlow[f.id] || []; const last = ms_[ms_.length - 1];
@@ -979,6 +988,7 @@ function Regia({ user, onLogout }) {
 
   return html`<div className="app">
     <${Band} color="#152030" title="Regia" sub=${cfg.titolo} campaign=${d.campaign}>
+      <button id="btn-vista-partecipanti" className="btn-light" onClick=${() => setVista(prevTeam)}>Vista partecipanti<small>come la vede una squadra</small></button>
       <button className="btn-light" onClick=${onLogout}>Esci</button>
     <//>
     ${err ? html`<div className="notice" role="alert">${err}</div>` : null}
