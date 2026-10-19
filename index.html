@@ -1479,7 +1479,9 @@ function Copione({ d, cfg, who, ops, goFlow }) {
     return Array.from(m.values()).map((items, i) => ({ n: i + 1, items, quando: (items.find(c => c.quando) || {}).quando || '' }));
   };
   const scaletta = fasi.map(fn => ({ fn, ps: passi(fn) })).filter(f => f.ps.length);
-  const corrente = scaletta.find(f => f.fn === fase);
+  // in Avvio o in Pausa il prossimo passo è nella fase successiva
+  const corrente = scaletta.find(f => fasi.indexOf(f.fn) >= fasi.indexOf(fase));
+  const faseP = corrente ? corrente.fn : '';
   const prossimo = corrente ? (corrente.ps.find(p => p.items.some(pendente)) || {}).n : null;
   const vai = id => { const el = document.querySelector('[data-copione="' + id + '"]'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
   const statoTxt = c => (fatto(c) ? '✓ ' : '') + (c.bivio && c.ramo ? 'B' + c.bivio + (c.ramo === 'si' ? ' sì · ' : ' no · ') : '');
@@ -1490,10 +1492,10 @@ function Copione({ d, cfg, who, ops, goFlow }) {
       <button id="btn-new-sit" className="btn" onClick=${() => setEdit('nuova')}>+ Nuova situazione o voce del monitor</button>
     </div>
     <details className="panel regia" id="scaletta" open=${true} style=${{ maxWidth: '980px' }}>
-      <summary><b>Scaletta</b> <span className="hint">· tutto l'ordine di rilascio in una pagina${prossimo ? ' · prossimo: passo ' + prossimo + ' di ' + fase : ''}</span></summary>
+      <summary><b>Scaletta</b> <span className="hint">· tutto l'ordine di rilascio in una pagina${prossimo ? ' · prossimo: passo ' + prossimo + ' di ' + faseP : ''}</span></summary>
       ${scaletta.map(f => html`<div key=${f.fn} className="scaletta-fase">
         <h3>${f.fn}${f.fn === fase ? ' (in corso)' : ''}</h3>
-        <ol className="scaletta">${f.ps.map(p => html`<li key=${p.n} className=${(p.items.some(pendente) ? '' : 'ok') + (f.fn === fase && p.n === prossimo ? ' next' : '')}>
+        <ol className="scaletta">${f.ps.map(p => html`<li key=${p.n} className=${(p.items.some(pendente) ? '' : 'ok') + (f.fn === faseP && p.n === prossimo ? ' next' : '')}>
           <span className="pn">${p.n}</span>
           <div>${p.quando ? html`<div className="q">${p.quando}</div>` : null}
             <div className="its">${p.items.map(c => html`<button key=${c.id} type="button" className=${'it' + (statoBivio(c) === 'escluso' ? ' off' : '')} style=${{ '--c': c.tipo === 'monitor' ? '#C78A12' : who.teamColor(c.team_id) }}
@@ -1533,7 +1535,7 @@ function Copione({ d, cfg, who, ops, goFlow }) {
       return html`<section key=${fn}><h3 className="phase-h">${fn}${fn === fase ? ' (in corso)' : ''}</h3>
         ${ps.map(p => html`<div key=${p.n} className="passo">
           <h4 className="passo-h">Passo ${p.n}${p.quando ? html` <span className="hint">· ${p.quando}</span>` : null}
-            ${fn === fase && p.n === prossimo ? html` <span className="tag warn">prossimo</span>` : !p.items.some(pendente) ? html` <span className="tag">fatto</span>` : null}</h4>
+            ${fn === faseP && p.n === prossimo ? html` <span className="tag warn">prossimo</span>` : !p.items.some(pendente) ? html` <span className="tag">fatto</span>` : null}</h4>
           <div className="cards">${p.items.map(card)}</div>
         </div>`)}
       </section>`;
