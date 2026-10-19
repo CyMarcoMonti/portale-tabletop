@@ -97,6 +97,29 @@ p{margin:0}
 .monitor .item .x{font-size:20px;line-height:1.4;margin-top:6px}
 .monitor.full .item .x{font-size:28px}
 .monitor .item.new{animation:mon 1.4s ease-out}
+.monitor .item.ton-negativo{border-left-color:#E5534B}
+.monitor .item.ton-positivo{border-left-color:#3FB06A}
+.monitor .item.ton-neutro{border-left-color:#7D8FA3}
+.monitor .item .ch{display:inline-block;background:#26323F;color:#C9D4E0;border-radius:3px;padding:0 6px;margin-right:8px;font-size:11px}
+.monitor .item .right{display:flex;gap:12px;align-items:center}
+.monitor .item .pt{color:#8FA0B3;font-weight:600;text-transform:none;letter-spacing:0}
+.monitor mark{background:#F0B44C;color:#0E141C;border-radius:2px;padding:0 2px}
+.monitor .mon-sub{font-size:13px;color:#8FA0B3;margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.monitor .mon-sub b{color:#E8EDF3;background:#26323F;border-radius:3px;padding:0 6px}
+.monitor .live{color:#E5534B;font-weight:700;text-transform:uppercase;letter-spacing:.05em;font-size:12px}
+.monitor .live::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#E5534B;margin-right:5px;vertical-align:1px}
+.monitor .mon-kpi{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;max-width:980px}
+.monitor .mon-kpi>div{background:#17202B;border-radius:6px;padding:10px 14px;min-width:140px}
+.monitor .mon-kpi b{display:block;font-size:26px;font-stretch:75%;line-height:1.1}
+.monitor .mon-kpi b.neg{color:#E5534B}
+.monitor .mon-kpi span{font-size:12.5px;color:#8FA0B3}
+.monitor .mon-filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px;max-width:980px}
+.monitor .mon-switch{display:flex;gap:8px;align-items:center;font-weight:700;background:#17202B;border-radius:6px;padding:6px 10px}
+.monitor .mon-seg{display:inline-flex;border:1px solid #2C3846;border-radius:6px;overflow:hidden;max-width:100%;overflow-x:auto}
+.monitor .mon-seg button{border:0;background:#17202B;color:#C9D4E0;padding:6px 10px;font-size:13px;white-space:nowrap}
+.monitor .mon-seg button+button{border-left:1px solid #2C3846}
+.monitor .mon-seg button[aria-pressed=true]{background:#F0B44C;color:#0E141C;font-weight:700}
+.monitor .mon-q{width:auto;min-width:200px;background:#17202B;border-color:#2C3846;color:#E8EDF3}
 @keyframes mon{from{background:#3A2C10}to{background:#17202B}}
 .chips label:focus-within{outline:2px solid var(--inviato);outline-offset:2px}
 .chips .grp{width:100%;font-size:12px;font-weight:700;color:var(--muted);margin-top:4px}
@@ -274,6 +297,9 @@ function normCfg(c) {
     // tipi mostrati alle squadre per le comunicazioni esterne: generici, per non suggerire quelle previste
     tipi_esterni: strList(c.tipi_esterni, []),
     canali: strList(c.canali, []),
+    // monitoraggio media: azienda e parole che lo strumento cerca nei contenuti
+    azienda: String(c.azienda || ''),
+    monitor_parole: strList(c.monitor_parole, c.azienda ? [String(c.azienda)] : []),
     modelli: Array.isArray(c.modelli)
       ? c.modelli.filter(x => x && x.nome && x.testo).map(x => ({ nome: String(x.nome).trim(), oggetto: String(x.oggetto || '').trim(), testo: String(x.testo) }))
       : [],
@@ -1038,7 +1064,7 @@ function Room({ d, ops, me, onLogout, extra }) {
     ['esterna', 'Comunicazioni esterne', unreadIn('esterna')],
     ['situazione', 'Situazioni', unreadIn('situazione')],
     ['registro', 'Registro delle decisioni', 0],
-  ].concat(showMonitor ? [['monitor', 'Monitor', monUnread]] : []);
+  ].concat(showMonitor ? [['monitor', 'Monitoraggio media', monUnread]] : []);
   const tabOf = k => (k === 'voce' ? 'situazione' : k);
   const emptyText = {
     canale: 'Qui passano le richieste tra le due stanze. Scegline una dall\'elenco o aprine una nuova.',
@@ -1057,7 +1083,7 @@ function Room({ d, ops, me, onLogout, extra }) {
     ${daInformare.length && !me.preview ? html`<div className="notice">${daInformare.length === 1 ? 'Una comunicazione inviata in autonomia è ancora «non informata»' : daInformare.length + ' comunicazioni inviate in autonomia sono ancora «non informate»'}: mandate l'informativa all'altra stanza.
       <button className="btn small" onClick=${() => open(daInformare[0].id)}>Apri</button></div>` : null}
     <${Tabs} tabs=${tabs} value=${tab} color=${team.colore} onChange=${t => { setTab(t); setSel(null); setCompose(null); }}/>
-    ${tab === 'monitor' ? html`<${Monitor} items=${monItems}/>` : tab === 'registro' ? html`<${Registro} d=${d} me=${me} who=${who} ops=${ops}/>` : html`
+    ${tab === 'monitor' ? html`<${Monitor} items=${monItems} cfg=${cfg}/>` : tab === 'registro' ? html`<${Registro} d=${d} me=${me} who=${who} ops=${ops}/>` : html`
     <div className=${'work' + (sel || compose ? ' has-sel' : '')}>
       <div className="list">
         <div className="list-head">
@@ -1086,10 +1112,34 @@ function Room({ d, ops, me, onLogout, extra }) {
   </div>`;
 }
 
-/* Monitor della stanza: post, articoli e titoli simulati che il facilitatore fa comparire. Non chiede risposte. */
-function Monitor({ items }) {
+/* Monitoraggio media simulato: titoli, TG, post e forum che il facilitatore fa comparire.
+   Lo strumento filtra i contenuti in cui viene citata l'azienda. Non chiede risposte. */
+const CANALI_MEDIA = [['social', 'Social'], ['stampa', 'Stampa'], ['tv', 'TV'], ['istituzioni', 'Istituzioni'], ['forum', 'Forum e dark web']];
+const TONI = [['negativo', 'Negativo'], ['neutro', 'Neutro'], ['positivo', 'Positivo']];
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const fmtPortata = n => n == null ? 'portata n.d.' : n >= 1000000 ? (n / 1000000).toFixed(1).replace('.', ',') + ' mln' : n >= 1000 ? Math.round(n / 1000) + 'k' : String(n);
+function Monitor({ items, cfg }) {
   const [full, setFull] = useState(false);
-  const list = items.slice().sort((a, b) => byTime(b, a));
+  const [solo, setSolo] = useState(() => lsGet('mon:solo', true));
+  const [canale, setCanale] = useState('tutti');
+  const [tono, setTono] = useState('tutti');
+  const [q, setQ] = useState('');
+  useEffect(() => { lsSet('mon:solo', solo); }, [solo]);
+  const parole = (cfg && cfg.monitor_parole) || [];
+  const re = parole.length ? new RegExp('(' + parole.map(reEsc).join('|') + ')', 'gi') : null;
+  const menziona = m => !!re && (re.lastIndex = 0, re.test((m.testo || '') + ' ' + (m.fonte || '')));
+  const all = items.slice().sort((a, b) => byTime(b, a));
+  const menzioni = all.filter(menziona);
+  const list = all.filter(m => (!solo || menziona(m)) && (canale === 'tutti' || (m.canale || 'social') === canale)
+    && (tono === 'tutti' || (m.sentiment || 'neutro') === tono)
+    && (!q.trim() || ((m.testo || '') + ' ' + (m.fonte || '')).toLowerCase().includes(q.trim().toLowerCase())));
+  const neg = menzioni.filter(m => m.sentiment === 'negativo').length;
+  const portata = menzioni.reduce((a, m) => a + (m.portata || 0), 0);
+  const recenti = menzioni.filter(m => Date.now() - ms(m.created_at) < 30 * 60000).length;
+  const mark = s => {
+    if (!re) return s;
+    return String(s || '').split(re).map((p, i) => i % 2 ? html`<mark key=${i}>${p}</mark>` : p);
+  };
   const toggle = () => {
     const next = !full; setFull(next);
     try {
@@ -1103,13 +1153,28 @@ function Monitor({ items }) {
   }, []);
   return html`<div className=${'monitor' + (full ? ' full' : '')} id="monitor">
     <div className="monitor-head">
-      <h2>Notizie e social</h2>
+      <div><h2>Monitoraggio media</h2>
+        <div className="mon-sub"><span className="live">In diretta</span> Parole monitorate: ${parole.length ? parole.map(p => html`<b key=${p}>${p}</b>`) : 'nessuna'} · contenuti simulati</div></div>
       <button className="btn-light" onClick=${toggle}>${full ? 'Esci dallo schermo intero' : 'Schermo intero'}</button>
     </div>
-    ${list.length ? list.map((m, i) => html`<div key=${m.id} className=${'item' + (i === 0 ? ' new' : '')}>
-      <div className="src"><span>${m.fonte}</span><time>${ora(m.created_at)}</time></div>
-      <div className="x">${m.testo}</div>
-    </div>`) : html`<p style=${{ color: '#8FA0B3' }}>Per ora niente da segnalare.</p>`}
+    <div className="mon-kpi">
+      <div><b>${menzioni.length}</b><span>menzioni${cfg && cfg.azienda ? ' di ' + cfg.azienda : ''}</span></div>
+      <div><b>${recenti}</b><span>nell'ultima mezz'ora</span></div>
+      <div><b className=${menzioni.length && neg / menzioni.length >= 0.5 ? 'neg' : ''}>${menzioni.length ? Math.round(100 * neg / menzioni.length) : 0}%</b><span>con tono negativo</span></div>
+      <div><b>${fmtPortata(portata)}</b><span>portata stimata delle menzioni</span></div>
+      <div><b>${all.length - menzioni.length}</b><span>contenuti senza menzione</span></div>
+    </div>
+    <div className="mon-filters">
+      <label className="mon-switch"><input id="mon-solo" type="checkbox" checked=${solo} onChange=${e => setSolo(e.target.checked)}/> Solo menzioni dell'azienda</label>
+      <div className="mon-seg" role="group" aria-label="Canale">${[['tutti', 'Tutti i canali']].concat(CANALI_MEDIA).map(([k, l]) => html`<button key=${k} aria-pressed=${canale === k} onClick=${() => setCanale(k)}>${l}</button>`)}</div>
+      <div className="mon-seg" role="group" aria-label="Tono">${[['tutti', 'Ogni tono']].concat(TONI).map(([k, l]) => html`<button key=${k} aria-pressed=${tono === k} onClick=${() => setTono(k)}>${l}</button>`)}</div>
+      <input id="mon-q" type="text" className="mon-q" placeholder="Cerca nei contenuti" value=${q} onChange=${e => setQ(e.target.value)}/>
+    </div>
+    ${list.length ? list.map((m, i) => html`<div key=${m.id} className=${'item ton-' + (m.sentiment || 'neutro') + (i === 0 ? ' new' : '') + (menziona(m) ? ' cita' : '')}>
+      <div className="src"><span><span className="ch">${(CANALI_MEDIA.find(c => c[0] === (m.canale || 'social')) || [, 'Social'])[1]}</span>${m.fonte}</span>
+        <span className="right"><span className="pt">${fmtPortata(m.portata)}</span><time>${ora(m.created_at)}</time></span></div>
+      <div className="x">${mark(m.testo)}</div>
+    </div>`) : html`<p style=${{ color: '#8FA0B3' }}>${all.length ? 'Nessun contenuto con questi filtri.' : 'Per ora niente da segnalare.'}</p>`}
   </div>`;
 }
 
@@ -1367,13 +1432,16 @@ function Copione({ d, cfg, who, ops, goFlow }) {
     ['flows', 'copione'], 'Inviata a ' + who.teamName(s.team_id));
   // le voci del monitor non sono flussi: compaiono sullo schermo della squadra
   const sendMon = async (s, copioneId) => {
-    const r = await ops.run(sb.from('monitor').insert({ team_id: s.team_id, fonte: s.voce, testo: s.testo, fase: (d.campaign && d.campaign.fase) || '' }),
+    const meta = s.meta || {};
+    const r = await ops.run(sb.from('monitor').insert({ team_id: s.team_id, fonte: s.voce, testo: s.testo, fase: (d.campaign && d.campaign.fase) || '',
+      canale: meta.canale || 'social', sentiment: meta.sentiment || 'neutro', portata: meta.portata == null ? null : meta.portata }),
       ['monitor'], 'Sul monitor di ' + who.teamName(s.team_id));
     if (!r.error && copioneId) await ops.run(sb.from('copione').update({ inviato_at: new Date().toISOString() }).eq('id', copioneId), ['copione']);
     return r;
   };
   const send = (s, copioneId) => (s.tipo === 'monitor' ? sendMon(s, copioneId) : sendSit(s, copioneId));
   const scelta = n => ((d.bivi.find(b => b.numero === n) || {}).scelta) || null;
+  const cfgCita = c => cfg.monitor_parole.some(p => ((c.testo || '') + ' ' + (c.voce || '')).toLowerCase().includes(p.toLowerCase()));
   const statoBivio = c => { if (!c.bivio || !c.ramo) return null; const sc = scelta(c.bivio); return !sc ? 'aperto' : sc === c.ramo ? 'attivo' : 'escluso'; };
   const save = async (s, id) => {
     const row = { fase: s.fase, ordine: s.ordine, titolo: s.titolo.trim(), voce: s.voce.trim(), team_id: s.team_id, testo: s.testo, condizione: s.condizione, note: s.note, tipo: s.tipo || 'situazione' };
@@ -1400,6 +1468,8 @@ function Copione({ d, cfg, who, ops, goFlow }) {
           ? html`<${SituazioneForm} key=${c.id} init=${c} cfg=${cfg} who=${who} onSave=${s => save(s, c.id)} onCancel=${() => setEdit(null)}/>`
           : html`<div key=${c.id} className=${'card' + (fatto || sb_ === 'escluso' ? ' done' : '')} style=${{ '--c': isMon ? '#C78A12' : who.teamColor(c.team_id) }} data-copione=${c.id}>
             <div className="ch"><span className="t">${c.titolo}</span><span className="placard">${c.voce}</span><span>${isMon ? 'sul monitor di' : 'a'} ${who.teamName(c.team_id)}</span>
+              ${isMon && c.meta ? html`<span className="tag">${((CANALI_MEDIA.find(x => x[0] === c.meta.canale) || [])[1]) || 'Social'} · ${c.meta.sentiment || 'neutro'} · ${fmtPortata(c.meta.portata)}</span>` : null}
+              ${isMon ? html`<span className=${'tag' + (cfgCita(c) ? ' warn' : '')}>${cfgCita(c) ? 'cita l\'azienda' : 'non cita l\'azienda'}</span>` : null}
               ${c.condizione ? html`<span className=${'tag' + (sb_ === 'attivo' ? '' : sb_ === 'escluso' ? '' : ' warn')}>${c.condizione}${sb_ === 'attivo' ? ' · da usare' : sb_ === 'escluso' ? ' · esclusa' : ''}</span>` : null}</div>
             <div className="x">${c.testo}</div>
             ${c.note ? html`<div className="note">Regia: ${c.note}</div>` : null}
@@ -1433,9 +1503,13 @@ function MonitorRegia({ d, who, ops }) {
   const [team, setTeam] = useState(defTeam);
   const [fonte, setFonte] = useState('');
   const [testo, setTesto] = useState('');
+  const [canale, setCanale] = useState('social');
+  const [tono, setTono] = useState('negativo');
+  const [portata, setPortata] = useState('');
   const items = d.monitor.slice().sort((a, b) => byTime(b, a));
   const add = async () => {
-    const r = await ops.run(sb.from('monitor').insert({ team_id: team, fonte: fonte.trim() || 'Social', testo: testo.trim(), fase: (d.campaign && d.campaign.fase) || '' }),
+    const r = await ops.run(sb.from('monitor').insert({ team_id: team, fonte: fonte.trim() || 'Social', testo: testo.trim(), fase: (d.campaign && d.campaign.fase) || '',
+      canale, sentiment: tono, portata: portata ? parseInt(portata, 10) || null : null }),
       ['monitor'], 'Sul monitor di ' + who.teamName(team));
     if (!r.error) { setTesto(''); }
   };
@@ -1443,12 +1517,16 @@ function MonitorRegia({ d, who, ops }) {
     <summary><b>Monitor delle stanze</b> <span className="hint">· ${items.length} voci mostrate · aggiungi un post fuori copione</span></summary>
     <div className="grid2">
       <${Field} label="Su quale monitor"><select id="mon-team" value=${team} onChange=${e => setTeam(e.target.value)}>${who.teams.map(t => html`<option key=${t.id} value=${t.id}>${t.nome}</option>`)}</select><//>
-      <${Field} label="Fonte"><input id="mon-fonte" type="text" value=${fonte} placeholder="Per esempio: Social · automobilista" onChange=${e => setFonte(e.target.value)}/><//>
+      <${Field} label="Fonte"><input id="mon-fonte" type="text" value=${fonte} placeholder="Per esempio: @utente · X, oppure il nome di una testata" onChange=${e => setFonte(e.target.value)}/><//>
+      <${Field} label="Canale"><select id="mon-canale" value=${canale} onChange=${e => setCanale(e.target.value)}>${CANALI_MEDIA.map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select><//>
+      <${Field} label="Tono"><select id="mon-tono" value=${tono} onChange=${e => setTono(e.target.value)}>${TONI.map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select><//>
+      <${Field} label="Portata stimata" hint="Visualizzazioni o lettori; vuoto se non nota."><input id="mon-portata" type="number" value=${portata} onChange=${e => setPortata(e.target.value)}/><//>
     </div>
     <${Field} label="Testo"><textarea id="mon-testo" value=${testo} onChange=${e => setTesto(e.target.value)}></textarea><//>
     <div className="actions"><button id="mon-add" className="btn send small" disabled=${!team || !testo.trim()} onClick=${add}>Mostra sul monitor</button></div>
-    ${items.length ? html`<div className="tbl-wrap"><table><thead><tr><th>Ora</th><th>Monitor</th><th>Fonte</th><th>Testo</th><th></th></tr></thead><tbody>
-      ${items.map(m => html`<tr key=${m.id}><td className="n">${ora(m.created_at)}</td><td>${who.teamName(m.team_id)}</td><td>${m.fonte}</td><td>${m.testo}</td>
+    ${items.length ? html`<div className="tbl-wrap"><table><thead><tr><th>Ora</th><th>Monitor</th><th>Fonte</th><th>Canale e tono</th><th>Testo</th><th></th></tr></thead><tbody>
+      ${items.map(m => html`<tr key=${m.id}><td className="n">${ora(m.created_at)}</td><td>${who.teamName(m.team_id)}</td><td>${m.fonte}</td>
+        <td>${((CANALI_MEDIA.find(x => x[0] === m.canale) || [])[1]) || 'Social'} · ${m.sentiment || 'neutro'}</td><td>${m.testo}</td>
         <td><button className="link" onClick=${() => { if (window.confirm('Togliere questa voce dal monitor?')) ops.run(sb.from('monitor').delete().eq('id', m.id), ['monitor'], 'Tolta dal monitor'); }}>Togli</button></td></tr>`)}
     </tbody></table></div>` : null}
   </details>`;
@@ -1686,6 +1764,7 @@ function Impostazioni({ d, cfg, ops, load }) {
     tipi: lines(cfg.tipi_canale), destinatari: lines(cfg.destinatari), voci: lines(cfg.voci),
     fasi: lines(cfg.fasi.map(x => x.nome + (x.tempo ? ' | ' + x.tempo : ''))),
     tipiEst: lines(cfg.tipi_esterni.length ? cfg.tipi_esterni : cfg.comunicazioni.map(c => c.tipo)), canali: lines(cfg.canali),
+    azienda: cfg.azienda, parole: lines(cfg.monitor_parole),
   }));
   const [squadre, setSquadre] = useState(() => who.teams.map(t => ({
     id: t.id, nome: t.nome || '', colore: t.colore || '#5A6576', autorizza: !!t.autorizza, code: codeOf(t.id), ruoli: lines(cfg.ruoli[t.id] || []) })));
@@ -1715,7 +1794,7 @@ function Impostazioni({ d, cfg, ops, load }) {
     const config = normCfg({ ...raw, titolo: f.titolo, ruoli: Object.fromEntries(squadre.map(s => [s.id, unlines(s.ruoli)])), tipi_canale: unlines(f.tipi),
       destinatari: unlines(f.destinatari), voci: unlines(f.voci),
       fasi: unlines(f.fasi).map(l => { const [nome, tempo] = l.split('|').map(x => x.trim()); return { nome, tempo: tempo || '' }; }),
-      tipi_esterni: unlines(f.tipiEst), canali: unlines(f.canali) });
+      tipi_esterni: unlines(f.tipiEst), canali: unlines(f.canali), azienda: (f.azienda || '').trim(), monitor_parole: unlines(f.parole) });
     const tolte = d.teams.filter(t => !squadre.some(s => s.id === t.id)).map(t => t.id);
     const errs = [];
     const ops_ = [
@@ -1775,6 +1854,8 @@ function Impostazioni({ d, cfg, ops, load }) {
     <div className="grid2">
       <${Field} label="Tipi di comunicazione esterna" hint="Le squadre li scelgono quando scrivono all'esterno. Meglio generici: le comunicazioni previste dallo scenario restano riservate alla regia."><textarea value=${f.tipiEst} onChange=${set('tipiEst')}></textarea><//>
       <${Field} label="Canali" hint="Email, pagina di stato, messaggio nel gestionale…"><textarea value=${f.canali} onChange=${set('canali')}></textarea><//>
+      <${Field} label="Azienda simulata" hint="Compare nel monitoraggio media della Direzione."><input type="text" value=${f.azienda} onChange=${set('azienda')}/><//>
+      <${Field} label="Parole monitorate" hint="Una per riga. Il monitoraggio media evidenzia e filtra i contenuti che le contengono."><textarea value=${f.parole} onChange=${set('parole')}></textarea><//>
     </div>
     <div className="actions"><button id="save-settings" className="btn" onClick=${save}>Salva le impostazioni</button></div>
     <div className="section panel" style=${{ borderLeft: '5px solid var(--no)' }}>
