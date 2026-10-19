@@ -245,7 +245,148 @@ td.n{white-space:nowrap}
 .modal-bg{position:fixed;inset:0;background:rgba(21,32,48,.45);display:grid;place-items:center;padding:16px;z-index:10}
 .modal{background:var(--paper);border-radius:var(--r);padding:20px 22px;width:100%;max-width:440px}
 
+/* icone e personaggi */
+.ico{width:16px;height:16px;flex:none;vertical-align:-3px}
+.row .t .ico{color:var(--muted);margin-right:6px}
+.btn .ico,.btn-light .ico{margin-right:4px}
+.av{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--avc,#5A6576);color:#fff;font-size:10.5px;font-weight:800;letter-spacing:.02em;flex:none;line-height:1}
+.av.lg{width:36px;height:36px;font-size:13px}
+.empty-state{display:flex;gap:14px;align-items:flex-start}
+.empty-state .ico{width:28px;height:28px;color:var(--muted)}
+.band-title{display:flex;align-items:center;gap:14px;min-width:0}
+.band-logo{height:46px;max-width:160px;object-fit:contain;background:#fff;border-radius:4px;padding:3px}
+
+/* avviso di arrivo e guida */
+.arrivo{position:fixed;right:18px;top:18px;z-index:25;background:var(--paper);border:1px solid var(--line);border-left:6px solid var(--inviato);border-radius:var(--r);box-shadow:0 10px 30px rgba(21,32,48,.25);padding:12px 14px;width:min(380px,calc(100vw - 36px));display:grid;gap:6px;animation:arrivo .35s ease-out}
+.arrivo .k{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--inviato)}
+.arrivo .t{font-weight:700}
+@keyframes arrivo{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
+.guida-steps{display:flex;gap:6px;margin-bottom:12px}
+.guida-steps span{height:4px;flex:1;border-radius:2px;background:var(--soft)}
+.guida-steps span.on{background:var(--ink)}
+
+/* conduzione */
+.cockpit{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;padding:20px 28px 60px;max-width:1360px}
+.ck-top{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px}
+.ck-clock b{display:block;font-stretch:70%;font-size:24px;line-height:1.05}
+.ck-clock span{font-size:12.5px;color:var(--muted)}
+.ck-ritmo{font-size:13px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--soft);color:var(--muted)}
+.ck-ritmo.ok{background:#DCEFE0;color:var(--ok)}
+.ck-ritmo.warn{background:#FCE8D2;color:#8A4B00}
+.ck-ritmo.late{background:#F9D7D4;color:var(--no)}
+.ck-next{margin-top:16px;background:var(--paper);border:1px solid var(--line);border-top:5px solid var(--inviato);border-radius:var(--r);padding:16px 20px 18px}
+.ck-next-h{display:flex;gap:12px;align-items:baseline;flex-wrap:wrap}
+.ck-next-h .n{font-stretch:62%;font-weight:800;font-size:38px;line-height:1}
+.ck-q{color:var(--muted);margin:6px 0 4px;max-width:70ch}
+.ck-item{display:grid;grid-template-columns:auto 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--soft)}
+.ck-item.off{opacity:.5}
+.ck-item .ttl{font-weight:700;font-size:15.5px}
+.ck-item .x{font-size:14px;margin-top:6px;line-height:1.5;white-space:pre-wrap;max-width:75ch}
+.ck-item details summary{cursor:pointer;font-size:12.5px;color:var(--inviato);margin-top:4px;font-weight:600}
+.ck-item .note{font-size:13px;color:var(--muted);margin-top:6px;white-space:pre-wrap}
+.ck-bivio{background:#FFF6E0;border:1px solid #EBD3A0;border-radius:var(--r);padding:10px 14px;margin:10px 0}
+.ck-bivio .note{font-size:13px;color:var(--muted);margin-top:4px}
+.ck-side{display:grid;gap:14px;align-content:start}
+.ck-box{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px}
+.ck-box h3{font-size:14px;margin-bottom:8px;display:flex;gap:6px;align-items:center}
+.ck-list{display:grid;gap:5px}
+.ck-list>button:not(.link){display:block;width:100%;text-align:left;border:0;background:var(--hover);border-left:4px solid var(--c,#98A2B0);border-radius:3px;padding:6px 9px;font-size:13.5px;line-height:1.3}
+.ck-list>button:not(.link):hover{background:var(--selbg)}
+.ck-dopo{margin:0;padding-left:0;list-style:none}
+.ck-dopo li{padding:5px 0;font-size:13.5px;border-top:1px solid var(--soft)}
+.ck-dopo li:first-child{border-top:0}
+.ck-bv{padding:7px 0;border-top:1px solid var(--soft)}
+.ck-bv:first-of-type{border-top:0}
+.ck-bv-h{display:flex;gap:8px;justify-content:space-between;align-items:center;font-size:13.5px;font-weight:600}
+.ck-bv-h .seg button{padding:3px 9px;font-size:12.5px}
+.indizio{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.4}
+.indizio b{color:var(--ink)}
+.oss{font-size:13px;border-top:1px solid var(--soft);padding:6px 0;margin-top:6px}
+.oss time{font-weight:700;margin-right:6px}
+
+/* schermo della stanza */
+.schermo{position:fixed;inset:0;z-index:40;background:#0B1017;color:#E8EDF3;display:grid;grid-template-rows:auto auto 1fr;overflow:hidden}
+.sch-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:26px 36px 16px;border-bottom:5px solid var(--team)}
+.sch-team{font-stretch:62%;font-weight:800;font-size:clamp(34px,4.6vw,66px);line-height:.9}
+.sch-clock{text-align:right}
+.sch-clock .f{font-stretch:70%;font-weight:700;font-size:clamp(18px,2vw,28px);color:#C9D4E0}
+.sch-clock .t{font-stretch:62%;font-weight:800;font-size:clamp(38px,5vw,76px);line-height:.95;color:#F0B44C}
+.sch-ticker{background:#B3261E;color:#fff;display:flex;gap:16px;align-items:center;padding:10px 36px;font-size:clamp(17px,1.7vw,25px);font-weight:700;overflow:hidden;white-space:nowrap}
+.sch-ticker .lbl{background:#fff;color:#B3261E;padding:2px 10px;border-radius:3px;font-size:.72em;letter-spacing:.08em;flex:none}
+.sch-ticker .tk{overflow:hidden;text-overflow:ellipsis}
+.sch-body{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:28px;padding:22px 36px;overflow:hidden;min-height:0}
+.sch-body.one{grid-template-columns:minmax(0,1fr)}
+.sch-col{overflow:auto;min-height:0}
+.sch-col h3{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:#8FA0B3;margin-bottom:12px}
+.sch-arr{border-left:5px solid var(--c);background:#151D27;border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:10px}
+.sch-arr .h{display:flex;gap:8px;align-items:center;font-size:14px;color:#8FA0B3}
+.sch-arr .t{font-size:clamp(17px,1.6vw,24px);font-weight:700;margin-top:4px}
+.sch-close{position:absolute;right:18px;bottom:14px;z-index:1;background:rgba(11,16,23,.85)}
+
+/* contenuti dei media */
+.media{margin-bottom:12px;max-width:980px;border-radius:8px;overflow:hidden}
+.media .x{font-size:19px;line-height:1.42}
+.media .mh{display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:13px}
+.media .meta-r{display:flex;gap:10px;color:#8FA0B3;font-weight:600;flex:none}
+.media.social{background:#17202B;padding:12px 16px 14px;border:1px solid #243041}
+.media.social .hd{display:flex;gap:10px;align-items:center;font-weight:700;font-size:14px}
+.media.social .x{margin-top:8px}
+.media.stampa{background:#F4F1EA;color:#1B1B1B;padding:14px 18px 16px}
+.media.stampa .mast{font-family:Georgia,'Times New Roman',serif;font-variant:small-caps;letter-spacing:.06em;font-weight:700;font-size:15px}
+.media.stampa .mh{border-bottom:1px solid #1B1B1B;padding-bottom:5px}
+.media.stampa .x{font-family:Georgia,'Times New Roman',serif;font-weight:700;font-size:23px;line-height:1.25;margin-top:8px}
+.media.stampa .meta-r{color:#6B6458}
+.media.stampa mark{background:#F0B44C;color:#1B1B1B}
+.media.tv{background:#05070A;border:1px solid #1E2A38}
+.media.tv .bar{display:flex;align-items:stretch}
+.media.tv .lbl{background:#B3261E;color:#fff;font-weight:800;letter-spacing:.06em;padding:8px 12px;font-size:13px;display:flex;align-items:center}
+.media.tv .src{background:#1E2A38;color:#fff;padding:8px 12px;font-weight:700;font-size:13px;flex:1;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.media.tv .x{padding:12px 16px 14px;font-weight:700;font-size:22px}
+.media.istituzioni{background:#13233A;border:1px solid #2B4466;padding:12px 16px 14px}
+.media.istituzioni .lbl{font-size:11.5px;letter-spacing:.12em;font-weight:800;color:#9FC3F0}
+.media.istituzioni .x{margin-top:6px}
+.media.forum{background:#0A0F0B;border:1px solid #1F3524;padding:12px 16px 14px;font-family:ui-monospace,Consolas,monospace}
+.media.forum .x{color:#9BE7A8;font-size:16px;margin-top:6px}
+.media.forum .mh{color:#5FAF6E}
+.media.ton-negativo{box-shadow:inset 4px 0 0 #E5534B}
+.media.ton-positivo{box-shadow:inset 4px 0 0 #3FB06A}
+.media.new{animation:mediaIn 1.2s ease-out}
+@keyframes mediaIn{from{transform:translateY(-6px);opacity:.2}to{transform:none;opacity:1}}
+.monitor.full .media .x{font-size:25px}
+.schermo .media .x{font-size:clamp(18px,1.7vw,26px)}
+.schermo .media.stampa .x{font-size:clamp(22px,2.1vw,32px)}
+
+/* report per il cliente */
+.report-bg{position:fixed;inset:0;z-index:50;background:#DDE2E8;overflow:auto;padding:20px 16px 40px}
+.report-bar{max-width:960px;margin:0 auto 12px;display:flex;gap:8px;flex-wrap:wrap}
+.report{background:#fff;max-width:960px;margin:0 auto;padding:44px 52px 60px;box-shadow:0 6px 30px rgba(21,32,48,.15)}
+.report h1{font-stretch:70%;font-size:42px;line-height:1;margin-top:4px}
+.report h2{font-size:20px;margin:30px 0 10px;padding-bottom:4px;border-bottom:3px solid var(--acc)}
+.report h3{font-size:15px}
+.report .cover{border-bottom:8px solid var(--acc);padding-bottom:18px}
+.report .cover img{max-height:56px;max-width:220px;margin-bottom:16px;display:block}
+.report table{font-size:12.5px;border:1px solid var(--line)}
+.report .lane td{width:auto}
+.report .num{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:10px}
+.report .num div{border:1px solid var(--line);border-top:4px solid var(--acc);border-radius:4px;padding:10px 12px}
+.report .num b{display:block;font-size:28px;font-stretch:75%;line-height:1.05}
+.report .num span{font-size:12px;color:var(--muted)}
+@media print{
+  body.printing #root{display:none!important}
+  body.printing .report-bg{position:static;padding:0;background:#fff;overflow:visible}
+  body.printing .report-bar{display:none}
+  body.printing .report{box-shadow:none;padding:0;max-width:none}
+  body.printing .report h2{break-after:avoid}
+  body.printing .report tr{break-inside:avoid}
+}
+
+@media (max-width:1000px){
+  .cockpit{grid-template-columns:1fr}
+  .sch-body{grid-template-columns:1fr}
+}
 @media (max-width:860px){
+  .cockpit{padding:16px 14px 50px}
+  .report{padding:24px 18px 36px}
   .band{grid-template-columns:1fr;align-items:start}
   .clock{text-align:left}
   .who{justify-content:flex-start}
@@ -318,9 +459,13 @@ function normCfg(c) {
       : [],
     destinatari: strList(c.destinatari, []),
     voci: strList(c.voci, DEFAULT_CFG.voci).length ? strList(c.voci, DEFAULT_CFG.voci) : DEFAULT_CFG.voci,
+    // durata in minuti reali: serve alla conduzione per dire se si è nei tempi
     fasi: Array.isArray(c.fasi) && c.fasi.some(f => f && f.nome)
-      ? c.fasi.filter(f => f && f.nome).map(f => ({ nome: String(f.nome).trim(), tempo: String(f.tempo || '').trim() }))
+      ? c.fasi.filter(f => f && f.nome).map(f => ({ nome: String(f.nome).trim(), tempo: String(f.tempo || '').trim(), durata: parseInt(f.durata, 10) || 0 }))
       : DEFAULT_CFG.fasi,
+    // personalizzazione per il cliente: logo (immagine piccola, in linea) e colore di regia e report
+    logo: /^data:image\//.test(c.logo || '') ? c.logo : '',
+    colore: /^#[0-9a-f]{6}$/i.test(c.colore || '') ? c.colore : '',
   };
 }
 
@@ -353,6 +498,26 @@ function download(name, text, type) {
   a.href = URL.createObjectURL(blob); a.download = name;
   document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
+}
+// logo caricato dal facilitatore: ridotto e salvato in linea nella configurazione
+function leggiLogo(file) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onerror = rej;
+    fr.onload = () => {
+      const img = new Image();
+      img.onerror = rej;
+      img.onload = () => {
+        const k = Math.min(1, 360 / img.width, 120 / img.height);
+        const c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL('image/png'));
+      };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
 }
 function csv(rows) {
   const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
@@ -427,13 +592,13 @@ function faseAt(fasi, ts) {
 
 /* ---------- dati condivisi + tempo reale ---------- */
 const T_ALL = ['campaign', 'campaign_fasi', 'teams', 'members', 'flows', 'messages', 'registro', 'monitor'];
-const T_MASTER = ['settings', 'team_codes', 'copione', 'valutazioni', 'fiducia', 'flow_events', 'previste', 'attori', 'punti', 'tappe', 'bivi', 'cronologia', 'deleghe'];
+const T_MASTER = ['settings', 'team_codes', 'copione', 'valutazioni', 'fiducia', 'flow_events', 'previste', 'attori', 'punti', 'tappe', 'bivi', 'cronologia', 'deleghe', 'osservazioni'];
 const SINGLE = { campaign: 1, settings: 1 };
 
 function useData(isMaster) {
   const [d, setD] = useState({ loaded: false, campaign: null, settings: null, team_codes: [], campaign_fasi: [], teams: [], members: [],
     flows: [], messages: [], registro: [], monitor: [], copione: [], valutazioni: [], fiducia: [], flow_events: [],
-    previste: [], attori: [], punti: [], tappe: [], bivi: [], cronologia: [], deleghe: [] });
+    previste: [], attori: [], punti: [], tappe: [], bivi: [], cronologia: [], deleghe: [], osservazioni: [] });
   const [err, setErr] = useState('');
   const load = useCallback(async t => {
     const { data, error } = await sb.from(t).select('*');
@@ -503,9 +668,10 @@ const Stamp = ({ f }) => html`<span className=${'stamp st-' + f.stato}>${statoLa
 function Field({ label, hint, children }) {
   return html`<label className="field"><span className="lab">${label}</span>${children}${hint ? html`<span className="hint">${hint}</span>` : null}</label>`;
 }
-function Band({ color, title, sub, campaign, children }) {
+function Band({ color, title, sub, campaign, logo, children }) {
   return html`<header className="band" style=${{ '--team': color }}>
-    <div><div className="band-team">${title}</div>${sub ? html`<div className="band-sub">${sub}</div>` : null}</div>
+    <div className="band-title">${logo ? html`<img className="band-logo" src=${logo} alt=""/>` : null}
+      <div><div className="band-team">${title}</div>${sub ? html`<div className="band-sub">${sub}</div>` : null}</div></div>
     <div className="clock" aria-live="polite">
       <span className="fase">${(campaign && campaign.fase) || ''}</span>
       <span className="tempo">${(campaign && campaign.tempo_sim) || ''}</span>
@@ -515,8 +681,8 @@ function Band({ color, title, sub, campaign, children }) {
 }
 function Tabs({ tabs, value, onChange, color }) {
   return html`<nav className="tabs" role="tablist" style=${{ '--team': color }}>
-    ${tabs.map(([id, label, n]) => html`<button key=${id} role="tab" id=${'tab-' + id} aria-selected=${value === id}
-      onClick=${() => onChange(id)}>${label}${n ? html`<span className="badge">${n}</span>` : null}</button>`)}
+    ${tabs.map(([id, label, n, ico]) => html`<button key=${id} role="tab" id=${'tab-' + id} aria-selected=${value === id}
+      onClick=${() => onChange(id)}>${ico ? html`<${Icon} n=${ico}/>` : null}${label}${n ? html`<span className="badge">${n}</span>` : null}</button>`)}
   </nav>`;
 }
 function Composer({ onSend, placeholder, label, id }) {
@@ -541,6 +707,35 @@ function Modal({ children, onClose }) {
   }, [onClose]);
   return html`<div className="modal-bg" onClick=${e => { if (e.target === e.currentTarget) onClose(); }}>
     <div className="modal" role="dialog" aria-modal="true">${children}</div></div>`;
+}
+// icone a tratto, 24×24
+const ICONS = {
+  situazione: ['M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9', 'M10.3 21a1.94 1.94 0 0 0 3.4 0'],
+  canale: ['M8 3 4 7l4 4', 'M4 7h16', 'm16 21 4-4-4-4', 'M20 17H4'],
+  esterna: ['m22 2-7 20-4-9-9-4Z', 'M22 2 11 13'],
+  registro: ['M2 4h6a4 4 0 0 1 4 4v13a3 3 0 0 0-3-3H2z', 'M22 4h-6a4 4 0 0 0-4 4v13a3 3 0 0 1 3-3h7z'],
+  monitor: ['M3 7h18v12H3z', 'm16 3-4 4-4-4'],
+  play: ['M7 4l13 8-13 8z'],
+  nota: ['M12 20h9', 'M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z'],
+  schermo: ['M3 4h18v12H3z', 'M12 16v4', 'M8 20h8'],
+  guida: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20z', 'M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3', 'M12 17h.01'],
+  check: ['M20 6 9 17l-5-5'],
+  report: ['M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z', 'M14 2v6h6', 'M8 13h8', 'M8 17h6'],
+};
+const Icon = ({ n }) => html`<svg className="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+  ${(ICONS[n] || []).map((p, i) => html`<path key=${i} d=${p}/>`)}</svg>`;
+// ogni voce simulata ha le sue iniziali e un colore stabile, così si riconosce a colpo d'occhio
+const AV_COL = ['#3B5BA9', '#0B6F6A', '#9A3412', '#7E22CE', '#B45309', '#BE185D', '#15803D', '#334155', '#A21CAF', '#0369A1'];
+function iniziali(s) {
+  const w = String(s || '').replace(/[@#·—–\-_.,()]/g, ' ').split(/\s+/).filter(x => /\p{L}/u.test(x) && !/^(di|del|della|dei|delle|degli|e|il|la|lo|le|gli|per|a|da|in)$/i.test(x));
+  return ((w[0] || '?')[0] + (w[1] ? w[1][0] : (w[0] || '').slice(1, 2))).toUpperCase();
+}
+function coloreDi(s) { let h = 0; for (const c of String(s || '')) h = (h * 31 + c.charCodeAt(0)) >>> 0; return AV_COL[h % AV_COL.length]; }
+const Avatar = ({ nome, lg }) => html`<span className=${'av' + (lg ? ' lg' : '')} style=${{ '--avc': coloreDi(nome) }} aria-hidden="true">${iniziali(nome)}</span>`;
+function useNow(step) {
+  const [n, setN] = useState(Date.now());
+  useEffect(() => { const i = setInterval(() => setN(Date.now()), step); return () => clearInterval(i); }, [step]);
+  return n;
 }
 
 /* ---------- accesso ---------- */
@@ -637,7 +832,7 @@ function FlowList({ flows, byFlow, sel, onSel, unread, sectionOf, sections, who,
     <div className="sec"><span>${sections[i]}</span><span>${g.length}</span></div>
     ${g.map(f => html`<button key=${f.id} className="row" aria-current=${sel === f.id} style=${{ '--rail': railOf(f, who) }}
         data-flow=${f.id} onClick=${() => onSel(f.id)}>
-      <span className="t">${f.titolo}</span>
+      <span className="t"><${Icon} n=${f.kind}/>${f.titolo}</span>
       <span className="m">${routeOf(f, who, myTeam)}<${Stamp} f=${f}/><span>${ora(new Date(activity(f, byFlow)))}</span></span>
       ${unread && unread(f) ? html`<span className="unread" aria-label="Novità"></span>` : null}
     </button>`)}
@@ -796,7 +991,7 @@ function Msg({ m, who, isMaster }) {
   const isVoce = !!m.voce;
   return html`<div className=${'msg' + (isVoce ? ' voce' : '')} style=${isVoce ? null : { '--mc': who.teamColor(m.team_id) }}>
     <div className="h">
-      ${isVoce ? html`<span className="placard">${m.voce}</span>` : html`<b>${who.name(m.author)}</b>${m.ruolo ? html`<span>${m.ruolo}</span>` : null}<span>${who.teamName(m.team_id)}</span>`}
+      ${isVoce ? html`<${Avatar} nome=${m.voce}/><span className="placard">${m.voce}</span>` : html`<b>${who.name(m.author)}</b>${m.ruolo ? html`<span>${m.ruolo}</span>` : null}<span>${who.teamName(m.team_id)}</span>`}
       <time>${ora(m.created_at)}</time>
       ${isMaster && m.solo_team ? html`<span className="tag">visibile solo a ${who.teamName(m.solo_team)}</span>` : null}
     </div>
@@ -1027,6 +1222,9 @@ function Room({ d, ops, me, onLogout, extra }) {
   const [compose, setCompose] = useState(null);
   const [mine, setMine] = useState(false);
   const [profile, setProfile] = useState(false);
+  const [schermo, setSchermo] = useState(false);
+  const [guida, setGuida] = useState(() => !me.preview && !lsGet('guida:' + me.team, false));
+  const chiudiGuida = () => { lsSet('guida:' + me.team, true); setGuida(false); };
   useEffect(() => { lsSet('tab:' + me.team, tab); }, [tab]);
 
   const flows = d.flows.filter(f => f.from_team === me.team || f.to_team === me.team);
@@ -1072,13 +1270,34 @@ function Room({ d, ops, me, onLogout, extra }) {
     if (!me.preview && monItems.length > prevMon.current && lsGet('suono', true)) beep();
     prevMon.current = monItems.length;
   }, [monItems.length]);
+  // il numero di novità anche nel titolo della scheda del browser
+  useEffect(() => {
+    if (me.preview) return;
+    const n = totalUnread + monUnread;
+    document.title = (n ? '(' + n + ') ' : '') + team.nome + ' · ' + cfg.titolo;
+  }, [totalUnread, monUnread, team.nome, cfg.titolo]);
+  // avviso in alto quando arriva qualcosa per la stanza: situazioni, richieste, comunicazioni da autorizzare
+  const perMe = flows.filter(f => f.to_team === me.team && f.from_team !== me.team && !(f.kind === 'situazione' && f.richiesta));
+  const arrivati = useRef(null);
+  const [arrivo, setArrivo] = useState(null);
+  useEffect(() => {
+    const ids = perMe.map(f => f.id);
+    if (arrivati.current && !me.preview) {
+      const nuovo = perMe.filter(f => !arrivati.current.includes(f.id)).sort(byTime).pop();
+      if (nuovo) setArrivo(nuovo);
+    }
+    arrivati.current = ids;
+  }, [perMe.map(f => f.id).join()]);
+  useEffect(() => { if (!arrivo) return; const t = setTimeout(() => setArrivo(null), 15000); return () => clearTimeout(t); }, [arrivo]);
+  const arrivoLbl = f => f.kind === 'situazione' ? 'Nuova situazione' : f.kind === 'esterna' ? (autonoma(f) ? 'Per conoscenza da ' + who.teamName(f.from_team) : 'Da autorizzare')
+    : f.tipo === 'Informativa' ? 'Informativa da ' + who.teamName(f.from_team) : 'Richiesta da ' + who.teamName(f.from_team);
   const daInformare = flows.filter(f => f.from_team === me.team && nonInformata(f));
   const tabs = [
-    ['canale', 'Tra le stanze', unreadIn('canale')],
-    ['esterna', 'Comunicazioni esterne', unreadIn('esterna')],
-    ['situazione', 'Situazioni', unreadIn('situazione')],
-    ['registro', team.autorizza ? 'Log delle decisioni' : 'Registro ufficiale', 0],
-  ].concat(showMonitor ? [['monitor', 'Monitoraggio media', monUnread]] : []);
+    ['canale', 'Tra le stanze', unreadIn('canale'), 'canale'],
+    ['esterna', 'Comunicazioni esterne', unreadIn('esterna'), 'esterna'],
+    ['situazione', 'Situazioni', unreadIn('situazione'), 'situazione'],
+    ['registro', team.autorizza ? 'Log delle decisioni' : 'Registro ufficiale', 0, 'registro'],
+  ].concat(showMonitor ? [['monitor', 'Monitoraggio media', monUnread, 'monitor']] : []);
   const tabOf = k => (k === 'voce' ? 'situazione' : k);
   const emptyText = {
     canale: 'Qui passano le richieste tra le due stanze. Scegline una dall\'elenco o aprine una nuova.',
@@ -1088,8 +1307,10 @@ function Room({ d, ops, me, onLogout, extra }) {
   const ruoli = cfg.ruoli[me.team] || [];
 
   return html`<div className="app">
-    <${Band} color=${team.colore} title=${team.nome} sub=${me.preview ? 'Anteprima in sola lettura' : cfg.titolo} campaign=${d.campaign}>
-      ${!me.preview ? html`<button className="btn-light" id="btn-profile" onClick=${() => setProfile(true)}>${me.nome}<small>${me.ruolo || 'Scegli il ruolo'}</small></button>
+    <${Band} color=${team.colore} title=${team.nome} sub=${me.preview ? 'Anteprima in sola lettura' : cfg.titolo} campaign=${d.campaign} logo=${cfg.logo}>
+      <button className="btn-light" id="btn-schermo" title="Vista a tutto schermo per la TV della stanza" onClick=${() => setSchermo(true)}><${Icon} n="schermo"/> Schermo</button>
+      ${!me.preview ? html`<button className="btn-light" id="btn-guida" title="Come funziona" onClick=${() => setGuida(true)}><${Icon} n="guida"/></button>
+        <button className="btn-light" id="btn-profile" onClick=${() => setProfile(true)}>${me.nome}<small>${me.ruolo || 'Scegli il ruolo'}</small></button>
         <button className="btn-light" onClick=${onLogout}>Esci</button>` : extra || null}
     <//>
     ${!me.preview && !me.ruolo ? html`<div className="notice">Scegli il tuo ruolo del piano: comparirà accanto al tuo nome su richieste, decisioni e messaggi.
@@ -1118,9 +1339,17 @@ function Room({ d, ops, me, onLogout, extra }) {
             onCancel=${() => setCompose(null)} onDone=${id => { setCompose(null); setTab(tabOf(compose.kind)); setSel(id); }}/>`
           : selFlow ? html`<${FlowDetail} key=${selFlow.id} f=${selFlow} msgs=${byFlow[selFlow.id] || []} d=${d} who=${who} me=${me} ops=${ops} cfg=${cfg}
             onCompose=${c => { setTab(tabOf(c.kind)); setSel(null); setCompose(c); }} onOpen=${open} onBack=${() => setSel(null)} hasFlow=${id => flows.some(x => x.id === id)}/>`
-          : html`<div className="doc" style=${{ maxWidth: '620px' }}><p>${emptyText[tab]}</p></div>`}
+          : html`<div className="doc empty-state" style=${{ maxWidth: '620px' }}><${Icon} n=${tab}/><p>${emptyText[tab]}</p></div>`}
       </div>
     </div>`}
+    ${arrivo && !schermo ? html`<div className="arrivo" role="status">
+      <span className="k">${arrivoLbl(arrivo)}</span>
+      <span style=${{ display: 'flex', gap: '8px', alignItems: 'center' }}>${arrivo.voce ? html`<${Avatar} nome=${arrivo.voce}/>` : html`<${Icon} n=${arrivo.kind}/>`}<span className="t">${arrivo.titolo}</span></span>
+      <span className="actions" style=${{ marginTop: '2px' }}><button className="btn small" onClick=${() => { open(arrivo.id); setArrivo(null); }}>Apri</button>
+        <button className="btn plain small" onClick=${() => setArrivo(null)}>Più tardi</button></span>
+    </div>` : null}
+    ${schermo ? html`<${Schermo} d=${d} team=${team} cfg=${cfg} who=${who} onClose=${() => setSchermo(false)}/>` : null}
+    ${guida ? html`<${Guida} team=${team} who=${who} cfg=${cfg} showMonitor=${showMonitor} onClose=${chiudiGuida}/>` : null}
     ${profile ? html`<${Profile} me=${me} ruoli=${ruoli} ops=${ops} onClose=${() => setProfile(false)}/>` : null}
     <${Toast} t=${ops.toast}/>
   </div>`;
@@ -1184,12 +1413,87 @@ function Monitor({ items, cfg }) {
       <div className="mon-seg" role="group" aria-label="Tono">${[['tutti', 'Ogni tono']].concat(TONI).map(([k, l]) => html`<button key=${k} aria-pressed=${tono === k} onClick=${() => setTono(k)}>${l}</button>`)}</div>
       <input id="mon-q" type="text" className="mon-q" placeholder="Cerca nei contenuti" value=${q} onChange=${e => setQ(e.target.value)}/>
     </div>
-    ${list.length ? list.map((m, i) => html`<div key=${m.id} className=${'item ton-' + (m.sentiment || 'neutro') + (i === 0 ? ' new' : '') + (menziona(m) ? ' cita' : '')}>
-      <div className="src"><span><span className="ch">${(CANALI_MEDIA.find(c => c[0] === (m.canale || 'social')) || [, 'Social'])[1]}</span>${m.fonte}</span>
-        <span className="right"><span className="pt">${fmtPortata(m.portata)}</span><time>${ora(m.created_at)}</time></span></div>
-      <div className="x">${mark(m.testo)}</div>
-    </div>`) : html`<p style=${{ color: '#8FA0B3' }}>${all.length ? 'Nessun contenuto con questi filtri.' : 'Per ora niente da segnalare.'}</p>`}
+    ${list.length ? list.map((m, i) => html`<${MediaCard} key=${m.id} m=${m} mark=${mark} isNew=${i === 0}/>`)
+      : html`<p style=${{ color: '#8FA0B3' }}>${all.length ? 'Nessun contenuto con questi filtri.' : 'Per ora niente da segnalare.'}</p>`}
   </div>`;
+}
+
+/* Un contenuto dei media con l'aspetto del suo canale: post, ritaglio di giornale, sovrimpressione del TG, comunicato, forum. */
+function MediaCard({ m, mark, isNew }) {
+  const c = m.canale || 'social';
+  const tx = mark ? mark(m.testo) : m.testo;
+  const cls = 'media ' + c + ' ton-' + (m.sentiment || 'neutro') + (isNew ? ' new' : '');
+  const meta = html`<span className="meta-r">${m.portata != null ? html`<span>${fmtPortata(m.portata)}</span>` : null}<time>${ora(m.created_at)}</time></span>`;
+  if (c === 'stampa') return html`<article className=${cls}><div className="mh"><span className="mast">${m.fonte}</span>${meta}</div><div className="x">${tx}</div></article>`;
+  if (c === 'tv') return html`<article className=${cls}><div className="bar"><span className="lbl">ULTIM'ORA</span><span className="src"><span>${m.fonte}</span>${meta}</span></div><div className="x">${tx}</div></article>`;
+  if (c === 'istituzioni') return html`<article className=${cls}><div className="mh"><span className="lbl">COMUNICATO · ${m.fonte}</span>${meta}</div><div className="x">${tx}</div></article>`;
+  if (c === 'forum') return html`<article className=${cls}><div className="mh"><span>${'> ' + m.fonte}</span>${meta}</div><div className="x">${tx}</div></article>`;
+  return html`<article className=${cls}><div className="mh"><span className="hd"><${Avatar} nome=${m.fonte}/>${m.fonte}</span>${meta}</div><div className="x">${tx}</div></article>`;
+}
+
+/* Schermo della stanza: da proiettare sulla TV. Orologio della crisi, ultim'ora, media e ciò che arriva alla squadra. */
+function Schermo({ d, team, cfg, who, onClose }) {
+  const now = useNow(20000);
+  const media = d.monitor.filter(m => m.team_id === team.id).sort((a, b) => byTime(b, a));
+  const arrivi = d.flows.filter(f => f.to_team === team.id && f.from_team !== team.id && !(f.kind === 'situazione' && f.richiesta)).sort((a, b) => byTime(b, a)).slice(0, 7);
+  const urgente = media.find(m => (m.canale === 'tv' || m.canale === 'stampa') && now - ms(m.created_at) < 20 * 60000);
+  const attesa = d.flows.filter(f => f.to_team === team.id && f.stato === 'in_attesa').length;
+  useEffect(() => {
+    const k = e => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', k);
+    try { if (document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(() => {}); } catch (e) {}
+    return () => {
+      document.removeEventListener('keydown', k);
+      try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } catch (e) {}
+    };
+  }, []);
+  const da = f => f.kind === 'situazione' ? f.voce : f.kind === 'esterna' && !autonoma(f) ? 'Da autorizzare · ' + who.teamName(f.from_team) : who.teamName(f.from_team);
+  return html`<div className="schermo" style=${{ '--team': team.colore }} role="dialog" aria-label="Schermo della stanza">
+    <button className="btn-light sch-close" onClick=${onClose}>Chiudi · Esc</button>
+    <header className="sch-head">
+      <div><div className="sch-team">${team.nome}</div><div className="hint" style=${{ color: '#8FA0B3', marginTop: '8px' }}>${cfg.titolo}${attesa ? ' · ' + attesa + ' in attesa di decisione' : ''}</div></div>
+      <div className="sch-clock"><div className="f">${(d.campaign && d.campaign.fase) || ''}</div><div className="t">${(d.campaign && d.campaign.tempo_sim) || ora(now)}</div></div>
+    </header>
+    ${urgente ? html`<div className="sch-ticker"><span className="lbl">ULTIM'ORA</span><span className="tk">${urgente.fonte}: ${urgente.testo}</span></div>` : html`<div></div>`}
+    <div className=${'sch-body' + (media.length ? '' : ' one')}>
+      ${media.length ? html`<section className="sch-col"><h3>Dai media</h3>${media.slice(0, 8).map((m, i) => html`<${MediaCard} key=${m.id} m=${m} isNew=${i === 0}/>`)}</section>` : null}
+      <section className="sch-col"><h3>Arrivato in stanza</h3>
+        ${arrivi.length ? arrivi.map(f => html`<div key=${f.id} className="sch-arr" style=${{ '--c': f.kind === 'situazione' ? coloreDi(f.voce) : who.teamColor(f.from_team) }}>
+          <div className="h">${f.kind === 'situazione' ? html`<${Avatar} nome=${f.voce}/>` : html`<${Icon} n=${f.kind}/>`}<span>${da(f)}</span><span>· ${ora(f.created_at)}</span></div>
+          <div className="t">${f.titolo}</div></div>`) : html`<p style=${{ color: '#8FA0B3' }}>Ancora niente: la crisi sta per cominciare.</p>`}
+      </section>
+    </div>
+  </div>`;
+}
+
+/* Guida al primo accesso: quattro schermate, poi si riapre dal punto interrogativo nella banda. */
+function Guida({ team, who, cfg, showMonitor, onClose }) {
+  const [i, setI] = useState(0);
+  const altre = who.others(team.id).map(t => t.nome).join(', ') || 'l\'altra stanza';
+  const autorizza = (who.authorizers(team.id)[0] || {}).nome;
+  const passi = [
+    ['Benvenuti in ' + team.nome, html`<p>Lavorate come in una crisi vera: quello che arriva qui è tutto ciò che sapete. Nessuna risposta è giusta in partenza, conta come decidete e come comunicate.</p>
+      <p style=${{ marginTop: '8px' }}>Per prima cosa scegli il tuo <b>ruolo del piano</b> dal tuo nome, in alto a destra: comparirà su ogni messaggio e decisione.</p>`],
+    ['Dove arrivano le cose', html`<ul style=${{ margin: '0', paddingLeft: '18px', lineHeight: 1.55 }}>
+      <li><b>Situazioni</b>: messaggi di tecnici, clienti, autorità e altri attori. Rispondete dentro la situazione o portatela a ${altre}.</li>
+      <li><b>Tra le stanze</b>: richieste, decisioni e informative con ${altre}.</li>
+      ${showMonitor ? html`<li><b>Monitoraggio media</b>: titoli, TG e post che citano ${cfg.azienda || 'l\'azienda'}.</li>` : null}
+      <li>Quando arriva qualcosa compare un avviso in alto e, se lo lasci attivo, un suono.</li></ul>`],
+    ['Come comunicate all\'esterno', html`<p>In <b>Comunicazioni esterne</b> scrivete il testo come lo leggerà il destinatario: ognuno risponde in base a ciò che riceve e da chi.</p>
+      <p style=${{ marginTop: '8px' }}>${team.autorizza ? 'Le vostre comunicazioni le firmate voi.' : 'Prima di partire le autorizza ' + (autorizza || 'la squadra che autorizza') + '.'} In caso di urgenza potete inviare subito, senza autorizzazione: poi va mandata un'informativa all'altra stanza.</p>`],
+    ['Tenete traccia', html`<p>Nel <b>${team.autorizza ? 'Log delle decisioni' : 'Registro ufficiale'}</b> annotate cosa avete deciso, chi e perché: nella discussione finale i registri delle stanze si mettono uno accanto all'altro.</p>
+      <p style=${{ marginTop: '8px' }}>Con <b>Schermo</b>, nella banda in alto, la stanza si proietta sulla TV: orologio della crisi, ultim'ora e ciò che arriva.</p>`],
+  ];
+  const [titolo, corpo] = passi[i];
+  return html`<${Modal} onClose=${onClose}>
+    <div className="guida-steps" aria-hidden="true">${passi.map((_, j) => html`<span key=${j} className=${j <= i ? 'on' : ''}></span>`)}</div>
+    <h2>${titolo}</h2>
+    <div style=${{ marginTop: '10px' }}>${corpo}</div>
+    <div className="actions" style=${{ marginTop: '16px' }}>
+      ${i < passi.length - 1 ? html`<button id="guida-avanti" className="btn" onClick=${() => setI(i + 1)}>Avanti</button>` : html`<button id="guida-fine" className="btn" onClick=${onClose}>Iniziamo</button>`}
+      ${i > 0 ? html`<button className="btn plain" onClick=${() => setI(i - 1)}>Indietro</button>` : html`<button className="btn plain" onClick=${onClose}>Salta la guida</button>`}
+    </div>
+  <//>`;
 }
 
 function Profile({ me, ruoli, ops, onClose }) {
@@ -1260,7 +1564,7 @@ function FiduciaChart({ serie, fasi }) {
 function Regia({ user, onLogout }) {
   const { d, load, err } = useData(true);
   const ops = useOps(load);
-  const [tab, setTab] = useState(() => lsGet('rtab', 'sessione'));
+  const [tab, setTab] = useState(() => lsGet('rtab', 'conduzione'));
   const [sel, setSel] = useState(null);
   const [filtro, setFiltro] = useState('gestire');
   const [prevTeam, setPrevTeam] = useState('A');
@@ -1285,11 +1589,13 @@ function Regia({ user, onLogout }) {
   };
   const gestire = d.flows.filter(needsMe);
   const goFlow = id => { setTab('flussi'); setFiltro('tutti'); setSel(id); };
-  const tabs = [['sessione', 'Sessione'], ['flussi', 'Flussi', gestire.length], ['copione', 'Copione'], ['scenario', 'Scenario'], ['fiducia', 'Fiducia'],
-    ['debriefing', 'Debriefing'], ['anteprima', 'Vista squadre'], ['partecipanti', 'Partecipanti'], ['impostazioni', 'Impostazioni']];
+  const tabs = [['conduzione', 'Conduzione', 0, 'play'], ['sessione', 'Sessione'], ['flussi', 'Flussi', gestire.length], ['copione', 'Copione'], ['scenario', 'Scenario'], ['fiducia', 'Fiducia'],
+    ['debriefing', 'Debriefing', 0, 'report'], ['anteprima', 'Vista squadre'], ['partecipanti', 'Partecipanti'], ['impostazioni', 'Impostazioni']];
+  const colRegia = cfg.colore || '#152030';
 
   let body = null;
-  if (tab === 'sessione') body = html`<${Sessione} d=${d} cfg=${cfg} who=${who} ops=${ops} gestire=${gestire} goFlow=${goFlow}/>`;
+  if (tab === 'conduzione') body = html`<${Conduzione} d=${d} cfg=${cfg} who=${who} ops=${ops} gestire=${gestire} goFlow=${goFlow}/>`;
+  else if (tab === 'sessione') body = html`<${Sessione} d=${d} cfg=${cfg} who=${who} ops=${ops} gestire=${gestire} goFlow=${goFlow}/>`;
   else if (tab === 'flussi') {
     const filters = [['gestire', 'Da gestire'], ['esterna', 'Esterne'], ['canale', 'Tra le stanze'], ['situazione', 'Situazioni'], ['tutti', 'Tutti']];
     const list = d.flows.filter(f => filtro === 'tutti' ? true : filtro === 'gestire' ? needsMe(f) : f.kind === filtro);
@@ -1324,12 +1630,12 @@ function Regia({ user, onLogout }) {
   else if (tab === 'impostazioni') body = html`<${Impostazioni} d=${d} cfg=${cfg} ops=${ops} load=${load}/>`;
 
   return html`<div className="app">
-    <${Band} color="#152030" title="Regia" sub=${cfg.titolo} campaign=${d.campaign}>
+    <${Band} color=${colRegia} title="Regia" sub=${cfg.titolo} campaign=${d.campaign} logo=${cfg.logo}>
       <button id="btn-vista-partecipanti" className="btn-light" disabled=${!pt} onClick=${() => setVista(pt)}>Vista partecipanti<small>come la vede una squadra</small></button>
       <button className="btn-light" onClick=${onLogout}>Esci</button>
     <//>
     ${err ? html`<div className="notice" role="alert">${err}</div>` : null}
-    <${Tabs} tabs=${tabs} value=${tab} color="#152030" onChange=${t => { setTab(t); setSel(null); }}/>
+    <${Tabs} tabs=${tabs} value=${tab} color=${colRegia} onChange=${t => { setTab(t); setSel(null); }}/>
     ${body}
     <${Toast} t=${ops.toast}/>
   </div>`;
@@ -1415,6 +1721,235 @@ function Bivi({ d, ops }) {
   </div>`;
 }
 
+/* ---------- scaletta del copione: situazioni e voci del monitor in passi ---------- */
+const fattoCop = c => (c.tipo === 'monitor' ? c.inviato_at : c.inviato_flow);
+function statoBivioDi(d, c) {
+  if (!c.bivio || !c.ramo) return null;
+  const sc = (d.bivi.find(b => b.numero === c.bivio) || {}).scelta;
+  return !sc ? 'aperto' : sc === c.ramo ? 'attivo' : 'escluso';
+}
+// le decine dell'ordine formano il passo; in Avvio o in Pausa il prossimo passo è nella fase successiva
+function buildScaletta(d, cfg) {
+  const fasi = Array.from(new Set(cfg.fasi.map(f => f.nome).concat(d.copione.map(c => c.fase))));
+  const fase = (d.campaign && d.campaign.fase) || '';
+  const statoBivio = c => statoBivioDi(d, c);
+  const pendente = c => !fattoCop(c) && !c.saltato_at && statoBivio(c) !== 'escluso';
+  const passi = fn => {
+    const m = new Map();
+    d.copione.filter(c => c.fase === fn).sort((a, b) => a.ordine - b.ordine || a.id - b.id)
+      .forEach(c => { const k = Math.floor((c.ordine || 0) / 10); if (!m.has(k)) m.set(k, []); m.get(k).push(c); });
+    return Array.from(m.values()).map((items, i) => ({ n: i + 1, items, quando: (items.find(c => c.quando) || {}).quando || '' }));
+  };
+  const scaletta = fasi.map(fn => ({ fn, ps: passi(fn) })).filter(f => f.ps.length);
+  const corrente = scaletta.find(f => fasi.indexOf(f.fn) >= fasi.indexOf(fase));
+  const passo = corrente ? corrente.ps.find(p => p.items.some(pendente)) || null : null;
+  return { fasi, fase, scaletta, pendente, statoBivio, faseP: corrente ? corrente.fn : '', passo, prossimo: passo ? passo.n : null,
+    dopo: passo ? corrente.ps.filter(p => p.n > passo.n && p.items.some(pendente)).slice(0, 3) : [] };
+}
+// le situazioni diventano flussi; le voci del monitor compaiono sullo schermo della squadra
+async function rilascia(c, d, who, ops) {
+  if (c.tipo === 'monitor') {
+    const meta = c.meta || {};
+    const r = await ops.run(sb.from('monitor').insert({ team_id: c.team_id, fonte: c.voce, testo: c.testo, fase: (d.campaign && d.campaign.fase) || '',
+      canale: meta.canale || 'social', sentiment: meta.sentiment || 'neutro', portata: meta.portata == null ? null : meta.portata }),
+      ['monitor'], 'Sul monitor di ' + who.teamName(c.team_id));
+    if (!r.error && c.id) await ops.run(sb.from('copione').update({ inviato_at: new Date().toISOString() }).eq('id', c.id), ['copione']);
+    return r;
+  }
+  return ops.run(sb.rpc('send_situazione', { p_team: c.team_id, p_voce: c.voce, p_titolo: c.titolo, p_testo: c.testo, p_copione: c.id || null }),
+    ['flows', 'copione'], 'Inviata a ' + who.teamName(c.team_id));
+}
+
+/* ---------- indizi sui bivi: cosa dicono già i dati della sessione ---------- */
+const STOP = new Set(['dei', 'del', 'della', 'delle', 'degli', 'tra', 'per', 'con', 'sui', 'sul', 'sulla', 'agli', 'alle', 'allo', 'nel', 'nella', 'una', 'uno', 'che']);
+const normT = s => String(s || '').toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
+const paroleChiave = s => normT(s).split(' ').filter(w => w.length > 2 && !STOP.has(w));
+function previstaDi(d, f) {
+  const v = d.valutazioni.find(x => x.flow_id === f.id);
+  return v && v.prevista_id != null ? v.prevista_id : guessPrevista(f, d.previste);
+}
+// la fase di una comunicazione prevista è scritta come «2» o «1–2»: conta l'ultima
+function faseIdxDi(cfg, x) {
+  const i = cfg.fasi.findIndex(f => f.nome === x); if (i >= 0) return i;
+  const m = String(x || '').match(/(\d+)(?!.*\d)/);
+  return m ? cfg.fasi.findIndex(f => new RegExp('(^|\\D)' + m[1] + '(\\D|$)').test(faseBreve(f.nome))) : -1;
+}
+function indizioBivio(b, d, cfg, who) {
+  if (/informativ.*stanz|autonomia/i.test(b.titolo)) {
+    const aut = d.flows.filter(f => autonoma(f) && f.stato === 'inviato');
+    const no = aut.filter(f => !f.informata_at);
+    if (!aut.length) return { testo: 'Nessun invio in autonomia finora.' };
+    return no.length ? { testo: no.length + (no.length === 1 ? ' invio in autonomia senza informativa.' : ' invii in autonomia senza informativa.'), scelta: 'no', flow: no[0].id }
+      : { testo: 'Tutti gli invii in autonomia sono stati riferiti.', scelta: 'si' };
+  }
+  const chiave = paroleChiave(b.titolo).slice(0, 2);
+  const p = chiave.length ? d.previste.find(x => chiave.every(w => normT(x.tipo).includes(w))) : null;
+  if (p) {
+    const fs = d.flows.filter(f => f.kind !== 'situazione' && previstaDi(d, f) === p.id).sort(byTime);
+    const inv = fs.filter(f => f.inviato_at).sort((a, c) => ms(a.inviato_at) - ms(c.inviato_at))[0];
+    if (inv) return { testo: '«' + inv.titolo + '» inviata alle ' + ora(inv.inviato_at) + ' (' + (faseBreve(faseAt(d.campaign_fasi, inv.inviato_at)) || 'prima dell\'avvio') + '): valuta se è chiara, completa e in tempo.', scelta: 'si', flow: inv.id };
+    if (fs.length) return { testo: 'In preparazione: «' + fs[0].titolo + '», non ancora inviata.', flow: fs[0].id };
+    const fi = faseIdxDi(cfg, p.fase), cur = cfg.fasi.findIndex(f => f.nome === ((d.campaign && d.campaign.fase) || ''));
+    if (fi >= 0 && cur > fi) return { testo: 'Prevista entro ' + cfg.fasi[fi].nome + ' e mai preparata.', scelta: 'no' };
+    return { testo: 'Non ancora preparata (prevista: ' + p.tipo + ').' };
+  }
+  // senza una comunicazione prevista: se ne parla nei registri o nei flussi?
+  const rad = chiave[0] ? chiave[0].slice(0, 5) : '';
+  if (!rad) return { testo: '' };
+  const hit = d.registro.map(r => ({ t: r.created_at, s: r.testo, team: r.team_id }))
+    .concat(d.flows.filter(f => f.kind !== 'situazione' || f.richiesta).map(f => ({ t: f.created_at, s: f.titolo + ' — ' + (f.motivo || ''), team: f.from_team || f.to_team, flow: f.id })))
+    .filter(x => normT(x.s).includes(rad)).sort((a, c) => ms(a.t) - ms(c.t))[0];
+  if (!hit) return { testo: 'Nei registri e nei flussi non se ne parla ancora.' };
+  const s = String(hit.s); const i = Math.max(0, normT(s).indexOf(rad) - 40);
+  return { testo: who.teamName(hit.team) + ' alle ' + ora(hit.t) + ': «' + (i ? '…' : '') + s.slice(i, i + 110).trim() + (s.length > i + 110 ? '…' : '') + '»', flow: hit.flow };
+}
+function Indizio({ b, d, cfg, who, goFlow }) {
+  const I = indizioBivio(b, d, cfg, who);
+  if (!I.testo) return null;
+  return html`<div className="indizio">${I.testo}
+    ${I.scelta && b.scelta !== I.scelta ? html` Suggerito: <b>${I.scelta === 'si' ? 'sì' : 'no'}</b>.` : null}
+    ${I.flow && goFlow ? html` <button className="link" onClick=${() => goFlow(I.flow)}>apri</button>` : null}</div>`;
+}
+
+/* ---------- conduzione: il prossimo passo, i bivi da segnare, cosa aspetta la regia ---------- */
+function Conduzione({ d, cfg, who, ops, gestire, goFlow }) {
+  const S = buildScaletta(d, cfg);
+  const now = useNow(15000);
+  const fase = S.fase;
+  const [tempo, setTempo] = useState((d.campaign && d.campaign.tempo_sim) || '');
+  useEffect(() => { setTempo((d.campaign && d.campaign.tempo_sim) || ''); }, [d.campaign && d.campaign.tempo_sim]);
+  const [busy, setBusy] = useState(false);
+  const setFase = (nome, t) => ops.run(sb.rpc('set_fase', { p_fase: nome, p_tempo: t }), ['campaign', 'campaign_fasi'], 'Ora in corso: ' + nome);
+  const inizio = (d.campaign_fasi.slice().sort(byTime).filter(s => s.fase === fase).pop() || {}).created_at;
+  const minuti = inizio ? Math.max(0, Math.floor((now - ms(inizio)) / 60000)) : 0;
+  const durataFase = (cfg.fasi.find(f => f.nome === fase) || {}).durata || 0;
+  const corrente = S.scaletta.find(f => f.fn === fase);
+  const restano = corrente ? corrente.ps.filter(p => p.items.some(S.pendente)).length : 0;
+  const ritmo = !durataFase || !inizio ? null : minuti > durataFase ? 'late' : durataFase - minuti <= 10 && restano > 2 ? 'warn' : 'ok';
+  const succ = cfg.fasi[cfg.fasi.findIndex(f => f.nome === fase) + 1];
+  const P = S.passo;
+  const items = P ? P.items : [];
+  const pronte = items.filter(c => S.pendente(c) && S.statoBivio(c) !== 'aperto');
+  const biviAperti = Array.from(new Set(items.filter(c => S.pendente(c) && S.statoBivio(c) === 'aperto').map(c => c.bivio)))
+    .map(n => d.bivi.find(b => b.numero === n)).filter(Boolean);
+  const setBivio = (n, scelta) => ops.run(sb.from('bivi').update({ scelta }).eq('numero', n), ['bivi']);
+  const salta = list => ops.run(sb.from('copione').update({ saltato_at: new Date().toISOString() }).in('id', list.map(c => c.id)), ['copione'], list.length > 1 ? 'Passo saltato' : 'Saltata');
+  const rilasciaPasso = async () => {
+    setBusy(true);
+    for (const c of pronte) { const r = await rilascia(c, d, who, ops); if (r.error) break; }
+    setBusy(false);
+    ops.say(pronte.length > 1 ? 'Passo ' + P.n + ' rilasciato' : 'Rilasciata');
+  };
+  const tappa = d.tappe.slice().sort((a, b) => a.ordine - b.ordine).find(t => !t.at);
+  const bivi = d.bivi.slice().sort((a, b) => a.numero - b.numero);
+  const dove = c => (c.tipo === 'monitor' ? 'sul monitor di ' : 'a ') + who.teamName(c.team_id);
+  const stato = c => fattoCop(c) ? 'rilasciata' : c.saltato_at ? 'saltata' : ({ escluso: 'esclusa dal bivio', aperto: 'aspetta il bivio ' + c.bivio, attivo: 'versione giusta del bivio ' + c.bivio })[S.statoBivio(c)] || '';
+
+  return html`<div className="cockpit">
+    <div>
+      <div className="ck-top">
+        <div className="ck-clock"><b>${fase || 'Non iniziata'}</b>
+          <span>${inizio ? 'in corso da ' + durata(inizio, now) + (durataFase ? ' su ' + durataFase + ' min' : '') : 'scegli la fase per partire'}</span></div>
+        ${ritmo ? html`<span className=${'ck-ritmo ' + ritmo}>${ritmo === 'late' ? 'Oltre il tempo di ' + (minuti - durataFase) + ' min' : ritmo === 'warn' ? 'Mancano ' + (durataFase - minuti) + ' min e ' + restano + ' passi: accelera o salta i facoltativi' : 'Nei tempi'}</span>` : null}
+        ${corrente ? html`<span className="ck-ritmo">${restano ? (restano === 1 ? 'Resta 1 passo' : 'Restano ' + restano + ' passi') + ' in questa fase' : 'Fase completata'}</span>` : null}
+        <span style=${{ flex: 1 }}></span>
+        <span style=${{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <input id="ck-tempo" type="text" style=${{ width: '190px' }} value=${tempo} placeholder="Tempo simulato" aria-label="Tempo simulato mostrato alle squadre" onChange=${e => setTempo(e.target.value)}
+            onKeyDown=${e => { if (e.key === 'Enter') setFase(fase, tempo); }}/>
+          <button className="btn plain small" disabled=${!fase || tempo === ((d.campaign && d.campaign.tempo_sim) || '')} onClick=${() => setFase(fase, tempo)}>Aggiorna</button></span>
+        ${succ ? html`<button id="ck-succ" className="btn small" onClick=${() => { if (window.confirm('Passare a «' + succ.nome + '»?')) setFase(succ.nome, succ.tempo); }}>Passa a ${succ.nome} →</button>` : null}
+      </div>
+
+      ${P ? html`<section className="ck-next" id="ck-next">
+        <div className="ck-next-h"><span className="n">Passo ${P.n}</span><b>${S.faseP}</b>
+          ${S.faseP !== fase ? html`<span className="tag warn">${fase ? 'si apre con la fase successiva' : 'primo passo'}</span>` : null}</div>
+        ${P.quando ? html`<p className="ck-q">${P.quando}</p>` : null}
+        ${biviAperti.map(b => html`<div key=${b.numero} className="ck-bivio">
+          <b>Prima segna il bivio ${b.numero}: ${b.titolo}</b>
+          <div className="note"><b>Sì:</b> ${b.si}</div><div className="note"><b>No:</b> ${b.no}</div>
+          <${Indizio} b=${b} d=${d} cfg=${cfg} who=${who} goFlow=${goFlow}/>
+          <div className="actions"><button className="btn ok small" onClick=${() => setBivio(b.numero, 'si')}>Sì</button><button className="btn no small" onClick=${() => setBivio(b.numero, 'no')}>No</button></div>
+        </div>`)}
+        ${items.map(c => { const st = stato(c); const off = !S.pendente(c);
+          return html`<div key=${c.id} className=${'ck-item' + (off ? ' off' : '')} data-ck=${c.id}>
+            <${Avatar} nome=${c.voce} lg=${true}/>
+            <div>
+              <div className="ttl">${c.tipo === 'monitor' ? html`<${Icon} n="monitor"/> ` : null}${c.titolo}</div>
+              <div className="hint">${c.voce} · ${dove(c)}${st ? ' · ' + st : ''}</div>
+              <details><summary>Testo${c.note ? ' e note di regia' : ''}</summary><div className="x">${c.testo}</div>${c.note ? html`<div className="note">Regia: ${c.note}</div>` : null}</details>
+              ${pronte.length > 1 && pronte.includes(c) ? html`<div className="actions" style=${{ marginTop: '6px' }}>
+                <button className="btn plain small" disabled=${busy} onClick=${() => rilascia(c, d, who, ops)}>Rilascia solo questa</button>
+                <button className="btn plain small" disabled=${busy} onClick=${() => salta([c])}>Salta</button></div>` : null}
+            </div></div>`; })}
+        <div className="actions" style=${{ marginTop: '14px' }}>
+          <button id="btn-rilascia" className="btn send" disabled=${busy || !pronte.length} onClick=${rilasciaPasso}><${Icon} n="play"/> ${pronte.length > 1 ? 'Rilascia il passo (' + pronte.length + ')' : 'Rilascia'}</button>
+          <button className="btn plain" disabled=${busy} onClick=${() => { const rest = items.filter(S.pendente); if (rest.length && window.confirm('Saltare il passo ' + P.n + '? Le voci restano nel copione e puoi rimetterle in scaletta.')) salta(rest); }}>Salta il passo</button>
+          ${!pronte.length && biviAperti.length ? html`<span className="hint">Segna prima il bivio: poi si rilascia la versione giusta.</span>` : null}
+        </div>
+      </section>` : html`<section className="ck-next">
+        <h2>${S.scaletta.length ? 'Nessun passo da rilasciare' + (fase ? ' in ' + fase : '') : 'Il copione è vuoto'}</h2>
+        <p className="hint" style=${{ marginTop: '6px' }}>${succ ? 'Quando le stanze sono pronte, passa alla fase successiva.' : 'La scaletta è finita: è il momento del debriefing.'}</p>
+      </section>`}
+
+      ${S.dopo.length ? html`<div className="ck-box" style=${{ marginTop: '14px' }}><h3>Dopo</h3>
+        <ol className="ck-dopo">${S.dopo.map(p => html`<li key=${p.n}><b>${p.n}.</b> ${p.items.filter(S.pendente).map(c => c.titolo).join(' · ')}
+          ${p.quando ? html`<div className="hint">${p.quando}</div>` : null}</li>`)}</ol></div>` : null}
+    </div>
+
+    <aside className="ck-side">
+      <div className="ck-box"><h3><${Icon} n="situazione"/> Da gestire in regia${gestire.length ? ' · ' + gestire.length : ''}</h3>
+        ${gestire.length ? html`<div className="ck-list">${gestire.slice(0, 8).map(f => html`<button key=${f.id} style=${{ '--c': railOf(f, who) }} onClick=${() => goFlow(f.id)}>
+          <b>${f.titolo}</b><br/><span className="hint">${f.kind === 'esterna' ? 'Risponde: ' + destText(f) : f.richiesta ? 'Scrivono a ' + f.voce : 'Aspettano ' + (f.voce || 'una risposta')}</span></button>`)}
+          ${gestire.length > 8 ? html`<button className="link" onClick=${() => goFlow(gestire[8].id)}>e altri ${gestire.length - 8} in Flussi</button>` : null}</div>`
+          : html`<p className="empty">Niente in attesa della regia.</p>`}
+      </div>
+      ${tappa ? html`<div className="ck-box"><h3><${Icon} n="check"/> Prossima tappa del piano</h3>
+        <p>${tappa.nome}</p>
+        <div className="actions"><button className="btn small" onClick=${() => ops.run(sb.from('tappe').update({ at: new Date().toISOString() }).eq('chiave', tappa.chiave), ['tappe'], 'Tappa segnata')}>Segna adesso</button></div>
+      </div>` : null}
+      ${bivi.length ? html`<div className="ck-box"><h3>Bivi</h3>
+        ${bivi.map(b => html`<div key=${b.numero} className="ck-bv">
+          <div className="ck-bv-h"><span>${b.numero}. ${b.titolo}</span>
+            <span className="seg" role="group" aria-label=${'Bivio ' + b.numero}>${[['si', 'Sì'], ['no', 'No']].map(([k, l]) => html`<button key=${k} aria-pressed=${b.scelta === k} onClick=${() => setBivio(b.numero, b.scelta === k ? null : k)}>${l}</button>`)}</span></div>
+          <${Indizio} b=${b} d=${d} cfg=${cfg} who=${who} goFlow=${goFlow}/>
+        </div>`)}
+      </div>` : null}
+      <div className="ck-box"><h3><${Icon} n="nota"/> Note di osservazione</h3><${NoteRapide} d=${d} who=${who} ops=${ops} compact=${true}/></div>
+    </aside>
+  </div>`;
+}
+
+/* Note rapide della regia: una frase, l'orario, se serve il punto dei piani e la stanza. Finiscono nel debriefing e nel report. */
+function NoteRapide({ d, who, ops, compact }) {
+  const [t, setT] = useState('');
+  const [punto, setPunto] = useState('');
+  const [team, setTeam] = useState('');
+  const punti = d.punti.slice().sort((a, b) => a.ordine - b.ordine);
+  const nomePunto = id => { const p = d.punti.find(x => x.id === id); return p ? p.ordine + '. ' + p.punto : ''; };
+  const add = async () => {
+    if (!t.trim()) return;
+    const r = await ops.run(sb.from('osservazioni').insert({ testo: t.trim(), punto_id: punto ? Number(punto) : null, team_id: team || null,
+      fase: (d.campaign && d.campaign.fase) || '', tempo_sim: (d.campaign && d.campaign.tempo_sim) || '' }), ['osservazioni'], 'Nota salvata');
+    if (!r.error) setT('');
+  };
+  const list = d.osservazioni.slice().sort((a, b) => byTime(b, a));
+  return html`<div>
+    <textarea id="oss-testo" value=${t} placeholder="Cosa hai visto? Ctrl+Invio per salvare" style=${{ minHeight: '64px' }} onChange=${e => setT(e.target.value)}
+      onKeyDown=${e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); add(); } }}></textarea>
+    <div className=${compact ? '' : 'grid2'} style=${{ display: compact ? 'grid' : null, gap: '6px', marginTop: '6px' }}>
+      ${punti.length ? html`<select id="oss-punto" value=${punto} aria-label="Punto dei piani" onChange=${e => setPunto(e.target.value)}>
+        <option value="">Nessun punto dei piani</option>${punti.map(p => html`<option key=${p.id} value=${p.id}>${p.ordine}. ${p.punto}</option>`)}</select>` : null}
+      <select id="oss-team" value=${team} aria-label="Stanza" onChange=${e => setTeam(e.target.value)}>
+        <option value="">Tutte le stanze</option>${who.teams.map(x => html`<option key=${x.id} value=${x.id}>${x.nome}</option>`)}</select>
+    </div>
+    <div className="actions"><button id="oss-add" className="btn small" disabled=${!t.trim()} onClick=${add}>Salva la nota</button></div>
+    ${(compact ? list.slice(0, 4) : list).map(o => html`<div key=${o.id} className="oss"><time>${ora(o.created_at)}</time>${o.testo}
+      <div className="hint">${[o.team_id ? who.teamName(o.team_id) : '', nomePunto(o.punto_id), faseBreve(o.fase)].filter(Boolean).join(' · ')}
+        ${!compact ? html` · <button className="link" onClick=${() => { if (window.confirm('Togliere questa nota?')) ops.run(sb.from('osservazioni').delete().eq('id', o.id), ['osservazioni']); }}>togli</button>` : null}</div></div>`)}
+    ${compact && list.length > 4 ? html`<p className="hint" style=${{ marginTop: '6px' }}>Tutte le ${list.length} note sono nel Debriefing.</p>` : null}
+  </div>`;
+}
+
 const EMPTY_SIT = { fase: '', ordine: 0, titolo: '', voce: '', team_id: '', testo: '', condizione: '', note: '', tipo: 'situazione', quando: '' };
 function SituazioneForm({ init, cfg, who, onSave, onSend, onCancel }) {
   const defTeam = (who.teams.find(t => !t.autorizza) || who.teams[0] || {}).id || '';
@@ -1446,45 +1981,18 @@ function SituazioneForm({ init, cfg, who, onSave, onSend, onCancel }) {
 
 function Copione({ d, cfg, who, ops, goFlow }) {
   const [edit, setEdit] = useState(null);   // id | 'nuova'
-  const sendSit = (s, copioneId) => ops.run(sb.rpc('send_situazione', { p_team: s.team_id, p_voce: s.voce, p_titolo: s.titolo, p_testo: s.testo, p_copione: copioneId || null }),
-    ['flows', 'copione'], 'Inviata a ' + who.teamName(s.team_id));
-  // le voci del monitor non sono flussi: compaiono sullo schermo della squadra
-  const sendMon = async (s, copioneId) => {
-    const meta = s.meta || {};
-    const r = await ops.run(sb.from('monitor').insert({ team_id: s.team_id, fonte: s.voce, testo: s.testo, fase: (d.campaign && d.campaign.fase) || '',
-      canale: meta.canale || 'social', sentiment: meta.sentiment || 'neutro', portata: meta.portata == null ? null : meta.portata }),
-      ['monitor'], 'Sul monitor di ' + who.teamName(s.team_id));
-    if (!r.error && copioneId) await ops.run(sb.from('copione').update({ inviato_at: new Date().toISOString() }).eq('id', copioneId), ['copione']);
-    return r;
-  };
-  const send = (s, copioneId) => (s.tipo === 'monitor' ? sendMon(s, copioneId) : sendSit(s, copioneId));
-  const scelta = n => ((d.bivi.find(b => b.numero === n) || {}).scelta) || null;
+  const send = (s, copioneId) => rilascia({ ...s, id: copioneId }, d, who, ops);
   const cfgCita = c => cfg.monitor_parole.some(p => ((c.testo || '') + ' ' + (c.voce || '')).toLowerCase().includes(p.toLowerCase()));
-  const statoBivio = c => { if (!c.bivio || !c.ramo) return null; const sc = scelta(c.bivio); return !sc ? 'aperto' : sc === c.ramo ? 'attivo' : 'escluso'; };
   const save = async (s, id) => {
     const row = { fase: s.fase, ordine: s.ordine, titolo: s.titolo.trim(), voce: s.voce.trim(), team_id: s.team_id, testo: s.testo, condizione: s.condizione, note: s.note, tipo: s.tipo || 'situazione', quando: (s.quando || '').trim() };
     const r = await ops.run(id ? sb.from('copione').update(row).eq('id', id) : sb.from('copione').insert(row), ['copione'], 'Salvata');
     if (!r.error) setEdit(null);
   };
-  const ordineFasi = cfg.fasi.map(f => f.nome);
-  const fasi = Array.from(new Set(ordineFasi.concat(d.copione.map(c => c.fase))));
-  const fase = (d.campaign && d.campaign.fase) || '';
-  // scaletta: situazioni e voci del monitor in un'unica sequenza; le decine dell'ordine formano il passo
-  const fatto = c => (c.tipo === 'monitor' ? c.inviato_at : c.inviato_flow);
-  const pendente = c => !fatto(c) && statoBivio(c) !== 'escluso';
-  const passi = fn => {
-    const m = new Map();
-    d.copione.filter(c => c.fase === fn).sort((a, b) => a.ordine - b.ordine || a.id - b.id)
-      .forEach(c => { const k = Math.floor((c.ordine || 0) / 10); if (!m.has(k)) m.set(k, []); m.get(k).push(c); });
-    return Array.from(m.values()).map((items, i) => ({ n: i + 1, items, quando: (items.find(c => c.quando) || {}).quando || '' }));
-  };
-  const scaletta = fasi.map(fn => ({ fn, ps: passi(fn) })).filter(f => f.ps.length);
-  // in Avvio o in Pausa il prossimo passo è nella fase successiva
-  const corrente = scaletta.find(f => fasi.indexOf(f.fn) >= fasi.indexOf(fase));
-  const faseP = corrente ? corrente.fn : '';
-  const prossimo = corrente ? (corrente.ps.find(p => p.items.some(pendente)) || {}).n : null;
+  const { fase, scaletta, faseP, prossimo, pendente, statoBivio } = buildScaletta(d, cfg);
+  const fatto = fattoCop;
+  const ripristina = c => ops.run(sb.from('copione').update({ saltato_at: null }).eq('id', c.id), ['copione'], 'Di nuovo in scaletta');
   const vai = id => { const el = document.querySelector('[data-copione="' + id + '"]'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
-  const statoTxt = c => (fatto(c) ? '✓ ' : '') + (c.bivio && c.ramo ? 'B' + c.bivio + (c.ramo === 'si' ? ' sì · ' : ' no · ') : '');
+  const statoTxt = c => (fatto(c) ? '✓ ' : c.saltato_at ? '↷ ' : '') + (c.bivio && c.ramo ? 'B' + c.bivio + (c.ramo === 'si' ? ' sì · ' : ' no · ') : '');
   return html`<div className="page">
     <h2>Copione</h2>
     <p className="hint" style=${{ marginTop: '4px', maxWidth: '70ch' }}>Le situazioni e i post del monitor nell'ordine in cui rilasciarli, passo per passo. Le voci dello stesso passo partono insieme, oppure sono le versioni alternative di un bivio: segna la scelta in Sessione e quelle escluse si attenuano. «Invia ora» fa arrivare la situazione solo alla squadra indicata; «Mostra sul monitor» fa comparire post e notizie sullo schermo della stanza.</p>
@@ -1501,7 +2009,7 @@ function Copione({ d, cfg, who, ops, goFlow }) {
             <div className="its">${p.items.map(c => html`<button key=${c.id} type="button" className=${'it' + (statoBivio(c) === 'escluso' ? ' off' : '')} style=${{ '--c': c.tipo === 'monitor' ? '#C78A12' : who.teamColor(c.team_id) }}
               title=${(c.tipo === 'monitor' ? 'Monitor di ' : 'A ') + who.teamName(c.team_id)} onClick=${() => vai(c.id)}>${statoTxt(c)}${c.tipo === 'monitor' ? '▤ ' : ''}${c.titolo}</button>`)}</div></div>
         </li>`)}</ol></div>`)}
-      <p className="hint">Colore: la stanza che la riceve (ocra = monitor). ✓ già rilasciata · B1 sì / B1 no: versione legata a un bivio · barrata: esclusa dalla scelta del bivio.</p>
+      <p className="hint">Colore: la stanza che la riceve (ocra = monitor). ✓ già rilasciata · ↷ saltata · B1 sì / B1 no: versione legata a un bivio · barrata: esclusa dalla scelta del bivio. Per rilasciare un passo alla volta usa la scheda Conduzione.</p>
     </details>
     <${MonitorRegia} d=${d} who=${who} ops=${ops}/>
     ${edit === 'nuova' ? html`<div className="cards"><${SituazioneForm} cfg=${cfg} who=${who} init=${{ fase: fase || EMPTY_SIT.fase }}
@@ -1510,8 +2018,9 @@ function Copione({ d, cfg, who, ops, goFlow }) {
       const card = c => { const sb_ = statoBivio(c); const isMon = c.tipo === 'monitor'; const fatto = isMon ? c.inviato_at : c.inviato_flow;
         return edit === c.id
           ? html`<${SituazioneForm} key=${c.id} init=${c} cfg=${cfg} who=${who} onSave=${s => save(s, c.id)} onCancel=${() => setEdit(null)}/>`
-          : html`<div key=${c.id} className=${'card' + (fatto || sb_ === 'escluso' ? ' done' : '')} style=${{ '--c': isMon ? '#C78A12' : who.teamColor(c.team_id) }} data-copione=${c.id}>
+          : html`<div key=${c.id} className=${'card' + (fatto || c.saltato_at || sb_ === 'escluso' ? ' done' : '')} style=${{ '--c': isMon ? '#C78A12' : who.teamColor(c.team_id) }} data-copione=${c.id}>
             <div className="ch"><span className="t">${c.titolo}</span><span className="placard">${c.voce}</span><span>${isMon ? 'sul monitor di' : 'a'} ${who.teamName(c.team_id)}</span>
+              ${c.saltato_at && !fatto ? html`<span className="tag">saltata alle ${ora(c.saltato_at)} · <button className="link" onClick=${() => ripristina(c)}>rimetti in scaletta</button></span>` : null}
               ${isMon && c.meta ? html`<span className="tag">${((CANALI_MEDIA.find(x => x[0] === c.meta.canale) || [])[1]) || 'Social'} · ${c.meta.sentiment || 'neutro'} · ${fmtPortata(c.meta.portata)}</span>` : null}
               ${isMon ? html`<span className=${'tag' + (cfgCita(c) ? ' warn' : '')}>${cfgCita(c) ? 'cita l\'azienda' : 'non cita l\'azienda'}</span>` : null}
               ${c.condizione ? html`<span className=${'tag' + (sb_ === 'attivo' ? '' : sb_ === 'escluso' ? '' : ' warn')}>${c.condizione}${sb_ === 'attivo' ? ' · da usare' : sb_ === 'escluso' ? ' · esclusa' : ''}</span>` : null}</div>
@@ -1627,24 +2136,38 @@ function cronologia(d, who) {
   return rows.sort((a, b) => ms(a.t) - ms(b.t));
 }
 
+const mediaVal = v => { const xs = CRITERI.map(([k]) => v[k]).filter(Boolean); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
+// per ogni comunicazione prevista: la prima versione preparata, autorizzata e inviata, con deleghe e media delle valutazioni
+function previsteStato(d) {
+  const valOf = f => d.valutazioni.find(v => v.flow_id === f.id) || {};
+  return d.previste.slice().sort((a, b) => a.ordine - b.ordine).map(c => {
+    const fs = d.flows.filter(f => f.kind !== 'situazione' && previstaDi(d, f) === c.id).sort(byTime);
+    const aut = fs.filter(f => f.decided_at && f.stato !== 'respinto').sort((a, b) => ms(a.decided_at) - ms(b.decided_at))[0];
+    const inv = fs.filter(f => f.inviato_at).sort((a, b) => ms(a.inviato_at) - ms(b.inviato_at))[0];
+    const vs = fs.map(f => d.valutazioni.find(v => v.flow_id === f.id)).filter(Boolean).map(mediaVal).filter(x => x != null);
+    const deleghe = fs.map(f => valOf(f).delega).filter(Boolean);
+    return { c, fs, prep: fs[0], aut, inv, deleghe, media: vs.length ? (vs.reduce((a, b) => a + b, 0) / vs.length).toFixed(1) : '' };
+  });
+}
+function exportSessione(d) {
+  download('sessione-' + new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-') + '.json', JSON.stringify({
+    esportato: new Date().toISOString(), campaign: d.campaign, campaign_fasi: d.campaign_fasi, teams: d.teams, members: d.members, flows: d.flows,
+    messages: d.messages, registro: d.registro, flow_events: d.flow_events, valutazioni: d.valutazioni, fiducia: d.fiducia, copione: d.copione,
+    monitor: d.monitor, previste: d.previste, tappe: d.tappe, bivi: d.bivi, punti: d.punti, osservazioni: d.osservazioni }, null, 2), 'application/json');
+}
+
 function Debriefing({ d, cfg, who, goFlow, ops }) {
   const [vedi, setVedi] = useState('tutto');
+  const [report, setReport] = useState(false);
   const rows = cronologia(d, who);
   const serie = fiduciaSerie(d.fiducia);
-  const media = v => { const xs = CRITERI.map(([k]) => v[k]).filter(Boolean); return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
+  const media = mediaVal;
   const valutate = d.valutazioni.map(v => ({ v, f: d.flows.find(f => f.id === v.flow_id) })).filter(x => x.f).sort((a, b) => byTime(a.f, b.f));
   const conFase = ts => ts ? ora(ts) + ' ' + (faseBreve(faseAt(d.campaign_fasi, ts)) || '') : '';
   const valOf = f => d.valutazioni.find(v => v.flow_id === f.id) || {};
   // a quale comunicazione prevista corrisponde un flusso: quella scelta in valutazione, altrimenti il suggerimento
-  const previstaOf = f => { const v = valOf(f); return v.prevista_id != null ? v.prevista_id : guessPrevista(f, d.previste); };
-  const previste = d.previste.slice().sort((a, b) => a.ordine - b.ordine).map(c => {
-    const fs = d.flows.filter(f => f.kind !== 'situazione' && previstaOf(f) === c.id).sort(byTime);
-    const aut = fs.filter(f => f.decided_at && f.stato !== 'respinto').sort((a, b) => ms(a.decided_at) - ms(b.decided_at))[0];
-    const inv = fs.filter(f => f.inviato_at).sort((a, b) => ms(a.inviato_at) - ms(b.inviato_at))[0];
-    const vs = fs.map(f => d.valutazioni.find(v => v.flow_id === f.id)).filter(Boolean).map(media).filter(x => x != null);
-    const deleghe = fs.map(f => valOf(f).delega).filter(Boolean);
-    return { c, fs, prep: fs[0], aut, inv, deleghe, media: vs.length ? (vs.reduce((a, b) => a + b, 0) / vs.length).toFixed(1) : '' };
-  });
+  const previstaOf = f => previstaDi(d, f);
+  const previste = previsteStato(d);
   const autonome = d.flows.filter(f => autonoma(f) && f.stato === 'inviato').sort(byTime);
   const conModello = d.flows.filter(f => f.modello).sort(byTime);
   const tappe = d.tappe.slice().sort((a, b) => a.ordine - b.ordine);
@@ -1665,14 +2188,12 @@ function Debriefing({ d, cfg, who, goFlow, ops }) {
       f.diretta ? 'sì' : '', autonoma(f) ? (f.informata_at ? oraSec(f.informata_at) : 'non informata') : '',
       ((d.previste.find(p => p.id === previstaOf(f)) || {}).tipo) || '', delegaLbl(v.delega)]
       .concat(CRITERI.map(([k]) => v[k] || '')).concat([media(v) != null ? media(v).toFixed(1) : '', v.nota || ''])))), 'text/csv;charset=utf-8');
-  const exportJson = () => download('sessione-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify({
-    esportato: new Date().toISOString(), campaign: d.campaign, campaign_fasi: d.campaign_fasi, teams: d.teams, members: d.members, flows: d.flows,
-    messages: d.messages, registro: d.registro, flow_events: d.flow_events, valutazioni: d.valutazioni, fiducia: d.fiducia, copione: d.copione,
-    monitor: d.monitor, previste: d.previste, tappe: d.tappe, bivi: d.bivi, punti: d.punti }, null, 2), 'application/json');
+  const exportJson = () => exportSessione(d);
   const filt = rows.filter(r => vedi === 'tutto' || r.team === vedi || (vedi === 'regia' && r.team === 'regia'));
   return html`<div className="page" style=${{ maxWidth: '1200px' }}>
     <h2>Debriefing</h2>
     <div className="actions">
+      <button id="btn-report" className="btn" onClick=${() => setReport(true)}><${Icon} n="report"/> Report per il cliente</button>
       <button className="btn plain small" onClick=${exportCrono}>Scarica la cronologia (CSV)</button>
       <button className="btn plain small" onClick=${exportVal}>Scarica le valutazioni (CSV)</button>
       <button className="btn plain small" onClick=${exportJson}>Scarica tutto (JSON)</button>
@@ -1739,8 +2260,13 @@ function Debriefing({ d, cfg, who, goFlow, ops }) {
 
     ${d.punti.length ? html`<div className="section"><h3>Punti dei piani messi alla prova</h3>
       <p className="hint">Per ogni punto due righe: cosa è successo in sala e una proposta di modifica. Si salvano quando esci dal campo.</p>
-      <div className="cards">${d.punti.slice().sort((a, b) => a.ordine - b.ordine).map(p => html`<${PuntoPiano} key=${p.id} p=${p} ops=${ops}/>`)}</div>
+      <div className="cards">${d.punti.slice().sort((a, b) => a.ordine - b.ordine).map(p => html`<${PuntoPiano} key=${p.id} p=${p} ops=${ops} note=${d.osservazioni.filter(o => o.punto_id === p.id)}/>`)}</div>
     </div>` : null}
+
+    <div className="section"><h3>Note di osservazione</h3>
+      <p className="hint">Quelle prese durante la sessione dalla Conduzione. Le note collegate a un punto compaiono anche sotto il punto.</p>
+      <div className="panel" style=${{ maxWidth: '780px' }}><${NoteRapide} d=${d} who=${who} ops=${ops} compact=${false}/></div>
+    </div>
 
     <div className="section"><h3>Partecipazione</h3>
       <div className="tbl-wrap"><table><thead><tr><th>Persona</th><th>Squadra</th><th>Ruolo</th><th>Aperte</th><th>Decisioni</th><th>Tempo medio di decisione</th><th>Invii</th><th>Messaggi</th><th>Registro</th></tr></thead><tbody>
@@ -1755,7 +2281,143 @@ function Debriefing({ d, cfg, who, goFlow, ops }) {
           <td>${r.flusso}${r.verso ? html`<br/><span className="hint">a ${r.verso}</span>` : null}</td><td className="x">${r.testo}</td></tr>`)}
       </tbody></table></div>
     </div>
+    ${report ? html`<${ReportView} d=${d} cfg=${cfg} who=${who} onClose=${() => setReport(false)}/>` : null}
   </div>`;
+}
+
+/* Report finale per il cliente: si stampa o si salva in PDF dal browser, oppure si scarica per Word. */
+const REPORT_CSS_WORD = 'body{font-family:Arial,sans-serif;font-size:11pt;color:#152030}h1{font-size:24pt}h2{font-size:15pt;border-bottom:2px solid #152030;margin-top:18pt}'
+  + 'table{border-collapse:collapse;width:100%}th,td{border:1px solid #C8D0DA;padding:4px 6px;vertical-align:top;font-size:9.5pt;text-align:left}th{background:#EEF1F4}.hint{color:#5A6576}';
+function reportEventi(d, who) {
+  const ev = [];
+  const add = (t, lane, testo) => { if (t) ev.push({ t, lane, testo }); };
+  d.campaign_fasi.forEach(s => add(s.created_at, 'scenario', 'Inizia ' + s.fase + (s.tempo_sim ? ' (' + s.tempo_sim + ')' : '')));
+  d.tappe.forEach(t => add(t.at, 'scenario', 'Tappa: ' + t.nome));
+  d.flows.forEach(f => {
+    if (f.kind === 'situazione' && !f.richiesta) { add(f.created_at, 'scenario', f.voce + ' → ' + who.teamName(f.to_team) + ': ' + f.titolo); return; }
+    if (f.kind === 'situazione') { add(f.created_at, f.to_team, 'Scrive a ' + f.voce + ': ' + f.titolo); return; }
+    if (f.kind === 'canale') {
+      add(f.created_at, f.from_team, (f.tipo === 'Informativa' ? 'Informativa a ' : 'Richiesta a ') + who.teamName(f.to_team) + ': ' + f.titolo);
+      if (f.decided_at && f.tipo !== 'Informativa') add(f.decided_at, f.to_team, (f.stato === 'respinto' ? 'Respinge: ' : 'Approva: ') + f.titolo);
+      return;
+    }
+    if (!f.diretta) add(f.created_at, f.from_team, 'Prepara «' + f.titolo + '» per ' + destText(f));
+    if (f.decided_at && !f.diretta) add(f.decided_at, f.to_team || f.from_team, (f.stato === 'respinto' ? 'Non autorizza: ' : 'Autorizza: ') + f.titolo);
+    if (f.inviato_at) add(f.inviato_at, f.from_team, (f.diretta ? 'Invia senza autorizzazione «' : 'Invia «') + f.titolo + '» a ' + destText(f));
+    if (f.informata_at) add(f.informata_at, f.from_team, 'Informa ' + who.teamName(f.to_team) + ' dell\'invio «' + f.titolo + '»');
+  });
+  d.registro.forEach(r => add(r.created_at, r.team_id, (who.team(r.team_id) || {}).autorizza ? 'Log: ' + r.testo : 'Registro: ' + r.testo));
+  return ev.sort((a, b) => ms(a.t) - ms(b.t));
+}
+function ReportView({ d, cfg, who, onClose }) {
+  const acc = cfg.colore || '#152030';
+  useEffect(() => {
+    const k = e => { if (e.key === 'Escape') onClose(); };
+    const fine = () => document.body.classList.remove('printing');
+    document.addEventListener('keydown', k); window.addEventListener('afterprint', fine);
+    return () => { document.removeEventListener('keydown', k); window.removeEventListener('afterprint', fine); fine(); };
+  }, []);
+  const storico = d.campaign_fasi.slice().sort(byTime);
+  const ev = reportEventi(d, who);
+  const inizio = storico.length ? storico[0].created_at : (ev[0] || {}).t;
+  const fine = ev.length ? ev[ev.length - 1].t : null;
+  const giorno = inizio ? new Date(inizio).toLocaleDateString('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+  const esterne = d.flows.filter(f => f.kind === 'esterna' && f.inviato_at);
+  const autonome = d.flows.filter(f => autonoma(f) && f.stato === 'inviato').sort(byTime);
+  const serie = fiduciaSerie(d.fiducia);
+  const vals = d.valutazioni.map(mediaVal).filter(x => x != null);
+  const criteri = CRITERI.map(([k, l]) => { const xs = d.valutazioni.map(v => v[k]).filter(Boolean); return [l, xs.length ? (xs.reduce((a, b) => a + b, 0) / xs.length).toFixed(1) : '—', xs.length]; });
+  const previste = previsteStato(d);
+  const tappe = d.tappe.slice().sort((a, b) => a.ordine - b.ordine);
+  const bivi = d.bivi.slice().sort((a, b) => a.numero - b.numero);
+  const punti = d.punti.slice().sort((a, b) => a.ordine - b.ordine).map(p => ({ p, note: d.osservazioni.filter(o => o.punto_id === p.id).sort(byTime) }));
+  const puntiPieni = punti.filter(x => x.p.accaduto || x.p.proposta || x.note.length);
+  const libere = d.osservazioni.filter(o => !o.punto_id).sort(byTime);
+  const conFase = ts => ts ? ora(ts) + ' · ' + (faseBreve(faseAt(d.campaign_fasi, ts)) || '') : '';
+  const lanes = [['scenario', 'Scenario']].concat(who.teams.map(t => [t.id, t.nome]));
+  const stampa = () => { document.body.classList.add('printing'); setTimeout(() => window.print(), 60); };
+  const word = () => {
+    const el = document.getElementById('report');
+    download('report-' + (cfg.azienda || 'esercitazione').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.doc',
+      '<html><head><meta charset="utf-8"><style>' + REPORT_CSS_WORD + '</style></head><body>' + el.innerHTML + '</body></html>', 'application/msword');
+  };
+  return ReactDOM.createPortal(html`<div className="report-bg" role="dialog" aria-label="Report per il cliente">
+    <div className="report-bar">
+      <button id="report-print" className="btn" onClick=${stampa}>Stampa o salva in PDF</button>
+      <button className="btn plain" onClick=${word}>Scarica per Word</button>
+      <button className="btn plain" onClick=${onClose}>Chiudi</button>
+      <span className="hint" style=${{ alignSelf: 'center' }}>Nella finestra di stampa scegli «Salva come PDF».</span>
+    </div>
+    <article className="report" id="report" style=${{ '--acc': acc }}>
+      <div className="cover">
+        ${cfg.logo ? html`<img src=${cfg.logo} alt=""/>` : null}
+        <p className="hint" style=${{ textTransform: 'uppercase', letterSpacing: '.08em', fontWeight: 700 }}>Report dell'esercitazione</p>
+        <h1>${cfg.titolo}</h1>
+        <p style=${{ marginTop: '8px' }}>${[cfg.azienda, giorno, inizio && fine ? 'durata ' + durata(inizio, fine) : ''].filter(Boolean).join(' · ')}</p>
+      </div>
+
+      <h2>In sintesi</h2>
+      <div className="num">
+        <div><b>${esterne.length}</b><span>comunicazioni esterne inviate</span></div>
+        <div><b>${autonome.length}</b><span>inviate in autonomia</span></div>
+        <div><b>${autonome.filter(f => !f.informata_at).length}</b><span>senza informativa all'altra stanza</span></div>
+        <div><b>${d.flows.filter(f => f.kind === 'canale').length}</b><span>richieste e informative tra le stanze</span></div>
+        <div><b>${vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : '—'}</b><span>media delle valutazioni (1–5)</span></div>
+        <div><b>${serie.length ? serie[serie.length - 1].valore : 100}</b><span>fiducia dei clienti a fine sessione</span></div>
+      </div>
+
+      <h2>Chi ha partecipato</h2>
+      <table><thead><tr>${who.teams.map(t => html`<th key=${t.id}>${t.nome}</th>`)}</tr></thead><tbody><tr>
+        ${who.teams.map(t => html`<td key=${t.id}>${d.members.filter(m => m.team_id === t.id).sort((a, b) => a.nome.localeCompare(b.nome)).map(m => html`<div key=${m.user_id}>${m.nome}${m.ruolo ? html` <span className="hint">— ${m.ruolo}</span>` : null}</div>`)}</td>`)}
+      </tr></tbody></table>
+
+      ${tappe.length ? html`<h2>Tempi del piano incidenti</h2>
+        <table><thead><tr><th>Tappa</th><th>Ora</th><th>Dalla tappa precedente</th></tr></thead><tbody>
+          ${tappe.map((t, i) => html`<tr key=${t.chiave}><td>${t.nome}</td><td>${t.at ? conFase(t.at) : 'non raggiunta'}</td><td>${i && t.at && tappe[i - 1].at ? durata(tappe[i - 1].at, t.at) : ''}</td></tr>`)}
+        </tbody></table>` : null}
+
+      ${bivi.length ? html`<h2>I momenti decisivi</h2>
+        <table><thead><tr><th>Bivio</th><th>Esito</th><th>Che cosa ha comportato</th></tr></thead><tbody>
+          ${bivi.map(b => html`<tr key=${b.numero}><td>${b.numero}. ${b.titolo}</td><td>${b.scelta === 'si' ? 'Sì' : b.scelta === 'no' ? 'No' : 'Non segnato'}</td><td>${b.scelta === 'si' ? b.si : b.scelta === 'no' ? b.no : ''}</td></tr>`)}
+        </tbody></table>` : null}
+
+      ${previste.length ? html`<h2>Comunicazioni attese e comunicazioni fatte</h2>
+        <table><thead><tr><th>Comunicazione</th><th>Destinatario</th><th>Termine</th><th>Preparata</th><th>Autorizzata</th><th>Inviata</th><th>Media</th></tr></thead><tbody>
+          ${previste.map(p => html`<tr key=${p.c.id}><td>${p.c.tipo}</td><td>${p.c.destinatario}</td><td>${p.c.termine}</td>
+            <td>${p.prep ? conFase(p.prep.created_at) : 'mai'}</td><td>${p.aut && !p.aut.diretta ? conFase(p.aut.decided_at) : p.inv && p.inv.diretta ? 'senza autorizzazione' : ''}</td>
+            <td>${p.inv ? conFase(p.inv.inviato_at) : p.prep && p.prep.kind === 'esterna' ? 'non inviata' : ''}</td><td>${p.media}</td></tr>`)}
+        </tbody></table>` : null}
+
+      ${autonome.length ? html`<h2>Invii in autonomia e informative</h2>
+        <table><thead><tr><th>Inviata</th><th>Da</th><th>Comunicazione</th><th>A</th><th>Informativa all'altra stanza</th></tr></thead><tbody>
+          ${autonome.map(f => html`<tr key=${f.id}><td>${conFase(f.inviato_at)}</td><td>${who.teamName(f.from_team)}</td><td>${f.titolo}${f.diretta ? ' (senza autorizzazione)' : ''}</td><td>${destText(f)}</td>
+            <td>${f.informata_at ? ora(f.informata_at) + ', dopo ' + durata(f.inviato_at, f.informata_at) : 'non inviata'}</td></tr>`)}
+        </tbody></table>` : null}
+
+      ${vals.length ? html`<h2>Qualità delle comunicazioni</h2>
+        <table><thead><tr><th>Criterio</th><th>Media (1–5)</th><th>Comunicazioni valutate</th></tr></thead><tbody>
+          ${criteri.map(([l, m, n]) => html`<tr key=${l}><td>${l}</td><td>${m}</td><td>${n}</td></tr>`)}
+        </tbody></table>` : null}
+
+      ${serie.length ? html`<h2>Fiducia dei clienti</h2><${FiduciaChart} serie=${serie}/>` : null}
+
+      <h2>Punti di miglioramento</h2>
+      ${(puntiPieni.length ? puntiPieni : punti).map(({ p, note }) => html`<div key=${p.id} style=${{ marginTop: '12px', breakInside: 'avoid' }}>
+        <h3>${p.ordine}. ${p.punto}</h3>${p.dove ? html`<p className="hint">${p.dove}</p>` : null}
+        ${p.accaduto ? html`<p style=${{ marginTop: '4px' }}><b>Cosa è successo:</b> ${p.accaduto}</p>` : null}
+        ${note.length ? html`<p style=${{ marginTop: '4px' }}><b>Osservato in sala:</b> ${note.map(o => ora(o.created_at) + ' ' + o.testo).join(' · ')}</p>` : null}
+        ${p.proposta ? html`<p style=${{ marginTop: '4px' }}><b>Proposta:</b> ${p.proposta}</p>` : null}
+        ${!p.accaduto && !p.proposta && !note.length ? html`<p className="hint">Da completare nel debriefing.</p>` : null}
+      </div>`)}
+      ${!punti.length ? html`<p className="hint">Nessun punto caricato.</p>` : null}
+      ${libere.length ? html`<h3 style=${{ marginTop: '16px' }}>Altre osservazioni</h3><ul>${libere.map(o => html`<li key=${o.id}>${ora(o.created_at)}${o.team_id ? ' · ' + who.teamName(o.team_id) : ''} — ${o.testo}</li>`)}</ul>` : null}
+
+      <h2>Linea del tempo</h2>
+      ${ev.length ? html`<table className="lane"><thead><tr><th>Ora</th>${lanes.map(([k, l]) => html`<th key=${k}>${l}</th>`)}</tr></thead><tbody>
+        ${ev.map((e, i) => html`<tr key=${i}><td style=${{ whiteSpace: 'nowrap' }}>${ora(e.t)}</td>${lanes.map(([k]) => html`<td key=${k}>${e.lane === k ? e.testo : ''}</td>`)}</tr>`)}
+      </tbody></table>` : html`<p className="hint">Nessun evento registrato.</p>`}
+    </article>
+  </div>`, document.body);
 }
 
 /* Riferimenti riservati alla regia: cronologia reale, elementi da tenere per sé, matrice delle deleghe. */
@@ -1787,13 +2449,14 @@ function ScenarioRegia({ d }) {
   </div>`;
 }
 
-function PuntoPiano({ p, ops }) {
+function PuntoPiano({ p, ops, note }) {
   const [a, setA] = useState(p.accaduto || '');
   const [b, setB] = useState(p.proposta || '');
   const save = patch => ops.run(sb.from('punti').update(patch).eq('id', p.id), ['punti']);
   return html`<div className="card" style=${{ '--c': '#152030' }}>
     <div className="ch"><span className="t">${p.ordine}. ${p.punto}</span><span className="tag">${p.dove}</span></div>
     <div className="note">${p.documenti}</div>
+    ${note && note.length ? html`<div className="note" style=${{ color: 'var(--ink)' }}><b>Osservato in sala:</b>${note.slice().sort(byTime).map(o => html`<div key=${o.id}>${ora(o.created_at)} — ${o.testo}</div>`)}</div>` : null}
     <div className="grid2">
       <${Field} label="Cosa è successo in sala"><textarea value=${a} onChange=${e => setA(e.target.value)} onBlur=${() => { if (a !== (p.accaduto || '')) save({ accaduto: a }); }}></textarea><//>
       <${Field} label="Proposta di modifica"><textarea value=${b} onChange=${e => setB(e.target.value)} onBlur=${() => { if (b !== (p.proposta || '')) save({ proposta: b }); }}></textarea><//>
@@ -1837,10 +2500,15 @@ function Impostazioni({ d, cfg, ops, load }) {
   const [f, setF] = useState(() => ({
     titolo: cfg.titolo,
     tipi: lines(cfg.tipi_canale), destinatari: lines(cfg.destinatari), voci: lines(cfg.voci),
-    fasi: lines(cfg.fasi.map(x => x.nome + (x.tempo ? ' | ' + x.tempo : ''))),
+    fasi: lines(cfg.fasi.map(x => x.nome + (x.tempo || x.durata ? ' | ' + x.tempo : '') + (x.durata ? ' | ' + x.durata : ''))),
     tipiEst: lines(cfg.tipi_esterni.length ? cfg.tipi_esterni : cfg.comunicazioni.map(c => c.tipo)), canali: lines(cfg.canali),
-    azienda: cfg.azienda, parole: lines(cfg.monitor_parole),
+    azienda: cfg.azienda, parole: lines(cfg.monitor_parole), logo: cfg.logo, colore: cfg.colore || '#152030',
   }));
+  const caricaLogo = async e => {
+    const file = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!file) return;
+    try { const logo = await leggiLogo(file); setF(x => ({ ...x, logo })); } catch (er) { ops.say('Immagine non leggibile: prova con un PNG o un JPG.', 'err'); }
+  };
   const [squadre, setSquadre] = useState(() => who.teams.map(t => ({
     id: t.id, nome: t.nome || '', colore: t.colore || '#5A6576', autorizza: !!t.autorizza, code: codeOf(t.id), ruoli: lines(cfg.ruoli[t.id] || []) })));
   const set = k => e => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
@@ -1868,8 +2536,9 @@ function Impostazioni({ d, cfg, ops, load }) {
     const raw = d.campaign && d.campaign.config ? d.campaign.config : {};
     const config = normCfg({ ...raw, titolo: f.titolo, ruoli: Object.fromEntries(squadre.map(s => [s.id, unlines(s.ruoli)])), tipi_canale: unlines(f.tipi),
       destinatari: unlines(f.destinatari), voci: unlines(f.voci),
-      fasi: unlines(f.fasi).map(l => { const [nome, tempo] = l.split('|').map(x => x.trim()); return { nome, tempo: tempo || '' }; }),
-      tipi_esterni: unlines(f.tipiEst), canali: unlines(f.canali), azienda: (f.azienda || '').trim(), monitor_parole: unlines(f.parole) });
+      fasi: unlines(f.fasi).map(l => { const [nome, tempo, dur] = l.split('|').map(x => x.trim()); return { nome, tempo: tempo || '', durata: parseInt(dur, 10) || 0 }; }),
+      tipi_esterni: unlines(f.tipiEst), canali: unlines(f.canali), azienda: (f.azienda || '').trim(), monitor_parole: unlines(f.parole),
+      logo: f.logo || '', colore: f.colore && f.colore.toLowerCase() !== '#152030' ? f.colore : '' });
     const tolte = d.teams.filter(t => !squadre.some(s => s.id === t.id)).map(t => t.id);
     const errs = [];
     const ops_ = [
@@ -1895,14 +2564,17 @@ function Impostazioni({ d, cfg, ops, load }) {
   const azzera = async () => {
     if (!window.confirm('Azzerare la simulazione? Si cancellano flussi, messaggi, registri, valutazioni, fiducia, storico delle fasi e post sui monitor; scelte dei bivi, tappe e scaletta ripartono da zero. Partecipanti, copione e impostazioni restano.')) return;
     if ((window.prompt('Per confermare scrivi AZZERA') || '').trim().toUpperCase() !== 'AZZERA') return;
+    // prima di cancellare, una copia completa della sessione finisce nei download
+    exportSessione(d);
     const z = '00000000-0000-0000-0000-000000000000';
     for (const p of [sb.from('flows').delete().neq('id', z), sb.from('registro').delete().gte('id', 0), sb.from('fiducia').delete().gte('id', 0),
-      sb.from('campaign_fasi').delete().gte('id', 0), sb.from('monitor').delete().gte('id', 0),
-      sb.from('copione').update({ inviato_at: null }).not('inviato_at', 'is', null), sb.from('bivi').update({ scelta: null }).not('scelta', 'is', null),
+      sb.from('campaign_fasi').delete().gte('id', 0), sb.from('monitor').delete().gte('id', 0), sb.from('osservazioni').delete().gte('id', 0),
+      sb.from('copione').update({ inviato_at: null }).not('inviato_at', 'is', null), sb.from('copione').update({ saltato_at: null }).not('saltato_at', 'is', null),
+      sb.from('bivi').update({ scelta: null }).not('scelta', 'is', null),
       sb.from('tappe').update({ at: null }).not('at', 'is', null)]) { const r = await ops.run(p); if (r.error) return; }
     await ops.run(sb.rpc('set_fase', { p_fase: cfg.fasi[0].nome, p_tempo: cfg.fasi[0].tempo }));
     T_ALL.concat(T_MASTER).forEach(load);
-    ops.say('Simulazione azzerata');
+    ops.say('Simulazione azzerata: la copia di sicurezza è nei download');
   };
   const team = (s, i) => html`<div key=${s.id} className="card" style=${{ '--c': s.colore }} data-team=${s.id}>
     <div className="grid2">
@@ -1918,6 +2590,15 @@ function Impostazioni({ d, cfg, ops, load }) {
   return html`<div className="page">
     <h2>Impostazioni</h2>
     <${Field} label="Titolo della simulazione"><input type="text" value=${f.titolo} onChange=${set('titolo')}/><//>
+    <div className="grid2">
+      <div className="field"><span className="lab">Logo del cliente</span>
+        <span style=${{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+          ${f.logo ? html`<img src=${f.logo} alt="Logo" style=${{ height: '40px', maxWidth: '160px', objectFit: 'contain', border: '1px solid var(--line)', borderRadius: '4px', padding: '2px', background: '#fff' }}/>` : null}
+          <label className="btn plain small" style=${{ cursor: 'pointer' }}>${f.logo ? 'Cambia' : 'Carica un\'immagine'}<input id="logo-file" type="file" accept="image/*" style=${{ display: 'none' }} onChange=${caricaLogo}/></label>
+          ${f.logo ? html`<button className="btn plain small" onClick=${() => setF({ ...f, logo: '' })}>Togli</button>` : null}</span>
+        <span className="hint">Compare nella banda delle stanze, in regia e nel report. Viene ridotto a 360×120 pixel.</span></div>
+      <${Field} label="Colore di regia e report" hint="La banda della regia e i titoli del report."><input type="color" value=${f.colore} onChange=${set('colore')}/><//>
+    </div>
     <div className="section" style=${{ marginTop: '22px' }}><h3>Squadre · ${squadre.length}</h3></div>
     <div className="cards">${squadre.map(team)}</div>
     <div className="actions"><button id="btn-add-team" className="btn plain" onClick=${aggiungi}>+ Aggiungi una squadra</button></div>
@@ -1926,7 +2607,7 @@ function Impostazioni({ d, cfg, ops, load }) {
       <${Field} label="Tipi di richiesta tra le stanze"><textarea value=${f.tipi} onChange=${set('tipi')}></textarea><//>
       <${Field} label="Destinatari esterni"><textarea value=${f.destinatari} onChange=${set('destinatari')}></textarea><//>
       <${Field} label="Voci del facilitatore"><textarea value=${f.voci} onChange=${set('voci')}></textarea><//>
-      <${Field} label="Fasi" hint="Una per riga: nome | tempo simulato"><textarea value=${f.fasi} onChange=${set('fasi')}></textarea><//>
+      <${Field} label="Fasi" hint="Una per riga: nome | tempo simulato | durata in minuti. La durata è facoltativa: con quella la Conduzione ti dice se sei nei tempi."><textarea value=${f.fasi} onChange=${set('fasi')}></textarea><//>
     </div>
     <div className="grid2">
       <${Field} label="Tipi di comunicazione esterna" hint="Le squadre li scelgono quando scrivono all'esterno. Meglio generici: le comunicazioni previste dallo scenario restano riservate alla regia."><textarea value=${f.tipiEst} onChange=${set('tipiEst')}></textarea><//>
@@ -1937,7 +2618,7 @@ function Impostazioni({ d, cfg, ops, load }) {
     <div className="actions"><button id="save-settings" className="btn" onClick=${save}>Salva le impostazioni</button></div>
     <div className="section panel" style=${{ borderLeft: '5px solid var(--no)' }}>
       <h3>Nuova sessione</h3>
-      <p className="hint">Prima di azzerare scarica tutto dal Debriefing.</p>
+      <p className="hint">Prima di cancellare, il portale scarica da solo una copia completa della sessione (JSON). Il report per il cliente va preparato prima, dal Debriefing.</p>
       <div className="actions"><button className="btn no" onClick=${azzera}>Azzera la simulazione</button></div>
     </div>
   </div>`;
