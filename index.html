@@ -199,6 +199,19 @@ input[type=color]{width:46px;height:34px;border:1px solid var(--line);border-rad
 .card .note{font-size:13px;color:var(--muted);margin-top:6px;white-space:pre-wrap}
 .card .x{margin-top:6px;line-height:1.5}
 .phase-h{font-stretch:75%;font-size:20px;margin:26px 0 4px}
+.passo{margin-top:14px}
+.passo-h{font-size:14px;font-weight:700;margin:0;display:flex;gap:6px;align-items:baseline;flex-wrap:wrap}
+.passo-h .hint{font-weight:400}
+.scaletta-fase h3{margin:14px 0 4px}
+.scaletta{list-style:none;margin:0;padding:0;display:grid;gap:2px}
+.scaletta li{display:grid;grid-template-columns:28px 1fr;gap:8px;padding:6px 8px;border-radius:4px}
+.scaletta li.ok{opacity:.6}
+.scaletta li.next{background:#FCE8D2}
+.scaletta .pn{font-weight:800;font-stretch:75%;font-size:17px;text-align:right}
+.scaletta .q{font-size:12.5px;color:var(--muted);margin-bottom:3px}
+.scaletta .its{display:flex;flex-wrap:wrap;gap:4px}
+.scaletta .it{border:1px solid var(--line);border-left:4px solid var(--c);background:#fff;border-radius:3px;padding:2px 8px;font-size:13px;text-align:left;cursor:pointer}
+.scaletta .it.off{text-decoration:line-through;opacity:.55}
 .stats{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
 .stat{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:10px 14px;min-width:130px}
 .stat b{display:block;font-size:26px;font-stretch:75%;line-height:1}
@@ -1402,7 +1415,7 @@ function Bivi({ d, ops }) {
   </div>`;
 }
 
-const EMPTY_SIT = { fase: '', ordine: 0, titolo: '', voce: '', team_id: '', testo: '', condizione: '', note: '', tipo: 'situazione' };
+const EMPTY_SIT = { fase: '', ordine: 0, titolo: '', voce: '', team_id: '', testo: '', condizione: '', note: '', tipo: 'situazione', quando: '' };
 function SituazioneForm({ init, cfg, who, onSave, onSend, onCancel }) {
   const defTeam = (who.teams.find(t => !t.autorizza) || who.teams[0] || {}).id || '';
   const [s, setS] = useState({ ...EMPTY_SIT, team_id: defTeam, fase: cfg.fasi[0] ? cfg.fasi[0].nome : '', voce: cfg.voci[0], ...init });
@@ -1415,11 +1428,12 @@ function SituazioneForm({ init, cfg, who, onSave, onSend, onCancel }) {
       <${Field} label="Arriva a"><select id="sit-team" value=${s.team_id} onChange=${set('team_id')}>${who.ids.map(t => html`<option key=${t} value=${t}>${who.teamName(t)}</option>`)}</select><//>
       <${Field} label="Voce"><input id="sit-voce" type="text" list="voci-list" value=${s.voce} onChange=${set('voce')}/>
         <datalist id="voci-list">${cfg.voci.map(v => html`<option key=${v} value=${v}/>`)}</datalist><//>
-      <${Field} label="Ordine nella fase"><input type="number" value=${s.ordine} onChange=${e => setS({ ...s, ordine: parseInt(e.target.value, 10) || 0 })}/><//>
+      <${Field} label="Ordine nella fase" hint="Le decine sono il passo della scaletta: 10–19 passo 1, 20–29 passo 2…"><input type="number" value=${s.ordine} onChange=${e => setS({ ...s, ordine: parseInt(e.target.value, 10) || 0 })}/><//>
       <${Field} label="Tipo"><select id="sit-tipo" value=${s.tipo || 'situazione'} onChange=${set('tipo')}><option value="situazione">Situazione nel portale</option><option value="monitor">Voce del monitor (la voce è la fonte)</option></select><//>
     </div>
     <${Field} label="Titolo"><input id="sit-titolo" type="text" value=${s.titolo} onChange=${set('titolo')}/><//>
     <${Field} label="Testo che arriva alla squadra"><textarea id="sit-testo" className="big" value=${s.testo} onChange=${set('testo')}></textarea><//>
+    <${Field} label="Quando farla partire" hint="Facoltativo: compare nella scaletta accanto al passo."><input type="text" value=${s.quando || ''} onChange=${set('quando')}/><//>
     <${Field} label="Condizione (bivio)" hint="Facoltativa: quando usare questa versione."><input type="text" value=${s.condizione} onChange=${set('condizione')}/><//>
     <${Field} label="Note di regia" hint="Le vedi solo tu."><textarea value=${s.note} onChange=${set('note')}></textarea><//>
     <div className="actions">
@@ -1448,25 +1462,49 @@ function Copione({ d, cfg, who, ops, goFlow }) {
   const cfgCita = c => cfg.monitor_parole.some(p => ((c.testo || '') + ' ' + (c.voce || '')).toLowerCase().includes(p.toLowerCase()));
   const statoBivio = c => { if (!c.bivio || !c.ramo) return null; const sc = scelta(c.bivio); return !sc ? 'aperto' : sc === c.ramo ? 'attivo' : 'escluso'; };
   const save = async (s, id) => {
-    const row = { fase: s.fase, ordine: s.ordine, titolo: s.titolo.trim(), voce: s.voce.trim(), team_id: s.team_id, testo: s.testo, condizione: s.condizione, note: s.note, tipo: s.tipo || 'situazione' };
+    const row = { fase: s.fase, ordine: s.ordine, titolo: s.titolo.trim(), voce: s.voce.trim(), team_id: s.team_id, testo: s.testo, condizione: s.condizione, note: s.note, tipo: s.tipo || 'situazione', quando: (s.quando || '').trim() };
     const r = await ops.run(id ? sb.from('copione').update(row).eq('id', id) : sb.from('copione').insert(row), ['copione'], 'Salvata');
     if (!r.error) setEdit(null);
   };
   const ordineFasi = cfg.fasi.map(f => f.nome);
   const fasi = Array.from(new Set(ordineFasi.concat(d.copione.map(c => c.fase))));
   const fase = (d.campaign && d.campaign.fase) || '';
+  // scaletta: situazioni e voci del monitor in un'unica sequenza; le decine dell'ordine formano il passo
+  const fatto = c => (c.tipo === 'monitor' ? c.inviato_at : c.inviato_flow);
+  const pendente = c => !fatto(c) && statoBivio(c) !== 'escluso';
+  const passi = fn => {
+    const m = new Map();
+    d.copione.filter(c => c.fase === fn).sort((a, b) => a.ordine - b.ordine || a.id - b.id)
+      .forEach(c => { const k = Math.floor((c.ordine || 0) / 10); if (!m.has(k)) m.set(k, []); m.get(k).push(c); });
+    return Array.from(m.values()).map((items, i) => ({ n: i + 1, items, quando: (items.find(c => c.quando) || {}).quando || '' }));
+  };
+  const scaletta = fasi.map(fn => ({ fn, ps: passi(fn) })).filter(f => f.ps.length);
+  const corrente = scaletta.find(f => f.fn === fase);
+  const prossimo = corrente ? (corrente.ps.find(p => p.items.some(pendente)) || {}).n : null;
+  const vai = id => { const el = document.querySelector('[data-copione="' + id + '"]'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  const statoTxt = c => (fatto(c) ? '✓ ' : '') + (c.bivio && c.ramo ? 'B' + c.bivio + (c.ramo === 'si' ? ' sì · ' : ' no · ') : '');
   return html`<div className="page">
     <h2>Copione</h2>
-    <p className="hint" style=${{ marginTop: '4px', maxWidth: '70ch' }}>Le situazioni preparate per ogni fase. «Invia ora» le fa arrivare solo alla squadra indicata, con il cartello della voce; «Mostra sul monitor» fa comparire post e notizie sullo schermo della stanza. Dove c'è un bivio, segna la scelta in Sessione: le versioni escluse si attenuano.</p>
+    <p className="hint" style=${{ marginTop: '4px', maxWidth: '70ch' }}>Le situazioni e i post del monitor nell'ordine in cui rilasciarli, passo per passo. Le voci dello stesso passo partono insieme, oppure sono le versioni alternative di un bivio: segna la scelta in Sessione e quelle escluse si attenuano. «Invia ora» fa arrivare la situazione solo alla squadra indicata; «Mostra sul monitor» fa comparire post e notizie sullo schermo della stanza.</p>
     <div className="actions">
       <button id="btn-new-sit" className="btn" onClick=${() => setEdit('nuova')}>+ Nuova situazione o voce del monitor</button>
     </div>
+    <details className="panel regia" id="scaletta" open=${true} style=${{ maxWidth: '980px' }}>
+      <summary><b>Scaletta</b> <span className="hint">· tutto l'ordine di rilascio in una pagina${prossimo ? ' · prossimo: passo ' + prossimo + ' di ' + fase : ''}</span></summary>
+      ${scaletta.map(f => html`<div key=${f.fn} className="scaletta-fase">
+        <h3>${f.fn}${f.fn === fase ? ' (in corso)' : ''}</h3>
+        <ol className="scaletta">${f.ps.map(p => html`<li key=${p.n} className=${(p.items.some(pendente) ? '' : 'ok') + (f.fn === fase && p.n === prossimo ? ' next' : '')}>
+          <span className="pn">${p.n}</span>
+          <div>${p.quando ? html`<div className="q">${p.quando}</div>` : null}
+            <div className="its">${p.items.map(c => html`<button key=${c.id} type="button" className=${'it' + (statoBivio(c) === 'escluso' ? ' off' : '')} style=${{ '--c': c.tipo === 'monitor' ? '#C78A12' : who.teamColor(c.team_id) }}
+              title=${(c.tipo === 'monitor' ? 'Monitor di ' : 'A ') + who.teamName(c.team_id)} onClick=${() => vai(c.id)}>${statoTxt(c)}${c.tipo === 'monitor' ? '▤ ' : ''}${c.titolo}</button>`)}</div></div>
+        </li>`)}</ol></div>`)}
+      <p className="hint">Colore: la stanza che la riceve (ocra = monitor). ✓ già rilasciata · B1 sì / B1 no: versione legata a un bivio · barrata: esclusa dalla scelta del bivio.</p>
+    </details>
     <${MonitorRegia} d=${d} who=${who} ops=${ops}/>
     ${edit === 'nuova' ? html`<div className="cards"><${SituazioneForm} cfg=${cfg} who=${who} init=${{ fase: fase || EMPTY_SIT.fase }}
       onSave=${s => save(s)} onSend=${async s => { const r = await send(s); if (!r.error) setEdit(null); }} onCancel=${() => setEdit(null)}/></div>` : null}
-    ${fasi.map(fn => {
-      const all = d.copione.filter(c => c.fase === fn).sort((a, b) => a.ordine - b.ordine || a.id - b.id);
-      if (!all.length) return null;
+    ${scaletta.map(({ fn, ps }) => {
       const card = c => { const sb_ = statoBivio(c); const isMon = c.tipo === 'monitor'; const fatto = isMon ? c.inviato_at : c.inviato_flow;
         return edit === c.id
           ? html`<${SituazioneForm} key=${c.id} init=${c} cfg=${cfg} who=${who} onSave=${s => save(s, c.id)} onCancel=${() => setEdit(null)}/>`
@@ -1492,10 +1530,12 @@ function Copione({ d, cfg, who, ops, goFlow }) {
               <button className="btn plain small" onClick=${() => { if (window.confirm('Eliminare «' + c.titolo + '» dal copione?')) ops.run(sb.from('copione').delete().eq('id', c.id), ['copione'], 'Eliminata'); }}>Elimina</button>
             </div>
           </div>`; };
-      const sit = all.filter(c => c.tipo !== 'monitor'), mon = all.filter(c => c.tipo === 'monitor');
       return html`<section key=${fn}><h3 className="phase-h">${fn}${fn === fase ? ' (in corso)' : ''}</h3>
-        ${sit.length ? html`<div className="cards">${sit.map(card)}</div>` : null}
-        ${mon.length ? html`<h3 style=${{ marginTop: '16px' }}>Monitor della stanza</h3><div className="cards">${mon.map(card)}</div>` : null}
+        ${ps.map(p => html`<div key=${p.n} className="passo">
+          <h4 className="passo-h">Passo ${p.n}${p.quando ? html` <span className="hint">· ${p.quando}</span>` : null}
+            ${fn === fase && p.n === prossimo ? html` <span className="tag warn">prossimo</span>` : !p.items.some(pendente) ? html` <span className="tag">fatto</span>` : null}</h4>
+          <div className="cards">${p.items.map(card)}</div>
+        </div>`)}
       </section>`;
     })}
   </div>`;
@@ -1851,11 +1891,13 @@ function Impostazioni({ d, cfg, ops, load }) {
     if (!errs.length) ops.say('Impostazioni salvate');
   };
   const azzera = async () => {
-    if (!window.confirm('Azzerare la simulazione? Si cancellano flussi, messaggi, registri, valutazioni, fiducia e storico delle fasi. Partecipanti, copione e impostazioni restano.')) return;
+    if (!window.confirm('Azzerare la simulazione? Si cancellano flussi, messaggi, registri, valutazioni, fiducia, storico delle fasi e post sui monitor; scelte dei bivi, tappe e scaletta ripartono da zero. Partecipanti, copione e impostazioni restano.')) return;
     if ((window.prompt('Per confermare scrivi AZZERA') || '').trim().toUpperCase() !== 'AZZERA') return;
     const z = '00000000-0000-0000-0000-000000000000';
     for (const p of [sb.from('flows').delete().neq('id', z), sb.from('registro').delete().gte('id', 0), sb.from('fiducia').delete().gte('id', 0),
-      sb.from('campaign_fasi').delete().gte('id', 0)]) { const r = await ops.run(p); if (r.error) return; }
+      sb.from('campaign_fasi').delete().gte('id', 0), sb.from('monitor').delete().gte('id', 0),
+      sb.from('copione').update({ inviato_at: null }).not('inviato_at', 'is', null), sb.from('bivi').update({ scelta: null }).not('scelta', 'is', null),
+      sb.from('tappe').update({ at: null }).not('at', 'is', null)]) { const r = await ops.run(p); if (r.error) return; }
     await ops.run(sb.rpc('set_fase', { p_fase: cfg.fasi[0].nome, p_tempo: cfg.fasi[0].tempo }));
     T_ALL.concat(T_MASTER).forEach(load);
     ops.say('Simulazione azzerata');
