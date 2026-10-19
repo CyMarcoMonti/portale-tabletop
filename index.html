@@ -414,13 +414,13 @@ function faseAt(fasi, ts) {
 
 /* ---------- dati condivisi + tempo reale ---------- */
 const T_ALL = ['campaign', 'campaign_fasi', 'teams', 'members', 'flows', 'messages', 'registro', 'monitor'];
-const T_MASTER = ['settings', 'team_codes', 'copione', 'valutazioni', 'fiducia', 'flow_events', 'previste', 'attori', 'punti', 'tappe', 'bivi'];
+const T_MASTER = ['settings', 'team_codes', 'copione', 'valutazioni', 'fiducia', 'flow_events', 'previste', 'attori', 'punti', 'tappe', 'bivi', 'cronologia', 'deleghe'];
 const SINGLE = { campaign: 1, settings: 1 };
 
 function useData(isMaster) {
   const [d, setD] = useState({ loaded: false, campaign: null, settings: null, team_codes: [], campaign_fasi: [], teams: [], members: [],
     flows: [], messages: [], registro: [], monitor: [], copione: [], valutazioni: [], fiducia: [], flow_events: [],
-    previste: [], attori: [], punti: [], tappe: [], bivi: [] });
+    previste: [], attori: [], punti: [], tappe: [], bivi: [], cronologia: [], deleghe: [] });
   const [err, setErr] = useState('');
   const load = useCallback(async t => {
     const { data, error } = await sb.from(t).select('*');
@@ -853,6 +853,7 @@ function Valutazione({ f, d, ops }) {
         <div className="seg" role="group" aria-label="Verdetto sulle deleghe">${DELEGHE.map(([k, l]) => html`<button key=${k} aria-pressed=${v.delega === k} onClick=${() => save({ delega: v.delega === k ? null : k })}>${l}</button>`)}</div>
       </div>
     </div>
+    ${d.deleghe && d.deleghe.length ? html`<details style=${{ marginTop: '8px' }}><summary className="hint" style=${{ cursor: 'pointer' }}>Consulta la matrice «Chi può comunicare cosa»</summary><${TabellaDeleghe} rows=${d.deleghe}/></details>` : null}
     <div className="score">
       ${CRITERI.map(([k, lbl]) => html`<${React.Fragment} key=${k}><span>${lbl}</span><span className="opts">
         ${[1, 2, 3, 4, 5].map(n => html`<button key=${n} aria-pressed=${v[k] === n} aria-label=${lbl + ' ' + n}
@@ -1063,7 +1064,7 @@ function Room({ d, ops, me, onLogout, extra }) {
     ['canale', 'Tra le stanze', unreadIn('canale')],
     ['esterna', 'Comunicazioni esterne', unreadIn('esterna')],
     ['situazione', 'Situazioni', unreadIn('situazione')],
-    ['registro', 'Registro delle decisioni', 0],
+    ['registro', team.autorizza ? 'Log delle decisioni' : 'Registro ufficiale', 0],
   ].concat(showMonitor ? [['monitor', 'Monitoraggio media', monUnread]] : []);
   const tabOf = k => (k === 'voce' ? 'situazione' : k);
   const emptyText = {
@@ -1205,9 +1206,11 @@ function Profile({ me, ruoli, ops, onClose }) {
 
 function Registro({ d, me, who, ops }) {
   const entries = d.registro.filter(r => r.team_id === me.team).sort((a, b) => byTime(b, a));
+  // il Comitato tiene il Log delle decisioni (Scribe), la gestione operativa il Registro ufficiale dell'incidente
+  const comitato = !!(who.team(me.team) || {}).autorizza;
   return html`<div className="page" id="registro">
-    <h2>Registro delle decisioni</h2>
-    <p className="hint" style=${{ marginTop: '4px', maxWidth: '68ch' }}>Ogni voce resta agli atti con orario, tempo simulato e autore, e non si modifica. Nella discussione finale i registri delle squadre vengono messi uno accanto all'altro. Per correggere, aggiungi una nuova voce.</p>
+    <h2>${comitato ? 'Log delle decisioni' : 'Registro ufficiale dell\'incidente'}</h2>
+    <p className="hint" style=${{ marginTop: '4px', maxWidth: '68ch' }}>${comitato ? 'Lo tiene lo Scribe del Comitato di Crisi. ' : 'Lo apre e lo tiene la gestione operativa, a partire dalla dichiarazione dell\'incidente. '}Ogni voce resta agli atti con orario, tempo simulato e autore, e non si modifica. Nella discussione finale i registri delle squadre vengono messi uno accanto all'altro. Per correggere, aggiungi una nuova voce.</p>
     ${!me.preview ? html`<div style=${{ maxWidth: '780px' }}><${Composer} id="reg-text" label="Aggiungi al registro"
       placeholder="Cosa è stato deciso, da chi e perché…" onSend=${t => ops.run(sb.rpc('add_registro', { p_testo: t }), ['registro'], 'Aggiunta al registro')}/></div>` : null}
     <ol className="reg">${entries.map(r => html`<li key=${r.id}>
@@ -1269,7 +1272,7 @@ function Regia({ user, onLogout }) {
   };
   const gestire = d.flows.filter(needsMe);
   const goFlow = id => { setTab('flussi'); setFiltro('tutti'); setSel(id); };
-  const tabs = [['sessione', 'Sessione'], ['flussi', 'Flussi', gestire.length], ['copione', 'Copione'], ['fiducia', 'Fiducia'],
+  const tabs = [['sessione', 'Sessione'], ['flussi', 'Flussi', gestire.length], ['copione', 'Copione'], ['scenario', 'Scenario'], ['fiducia', 'Fiducia'],
     ['debriefing', 'Debriefing'], ['anteprima', 'Vista squadre'], ['partecipanti', 'Partecipanti'], ['impostazioni', 'Impostazioni']];
 
   let body = null;
@@ -1294,6 +1297,7 @@ function Regia({ user, onLogout }) {
       </div></div>`;
   }
   else if (tab === 'copione') body = html`<${Copione} d=${d} cfg=${cfg} who=${who} ops=${ops} goFlow=${goFlow}/>`;
+  else if (tab === 'scenario') body = html`<${ScenarioRegia} d=${d}/>`;
   else if (tab === 'fiducia') body = html`<${Fiducia} d=${d} ops=${ops}/>`;
   else if (tab === 'debriefing') body = html`<${Debriefing} d=${d} cfg=${cfg} who=${who} goFlow=${goFlow} ops=${ops}/>`;
   else if (tab === 'anteprima') body = html`<div>
@@ -1708,6 +1712,35 @@ function Debriefing({ d, cfg, who, goFlow, ops }) {
         ${filt.map((r, i) => html`<tr key=${i}><td className="n">${oraSec(r.t)}</td><td>${r.fase}</td><td>${r.cosa}</td><td>${r.chi}${r.ruolo ? html`<br/><span className="hint">${r.ruolo}</span>` : null}<br/><span className="hint">${r.squadra}</span></td>
           <td>${r.flusso}${r.verso ? html`<br/><span className="hint">a ${r.verso}</span>` : null}</td><td className="x">${r.testo}</td></tr>`)}
       </tbody></table></div>
+    </div>
+  </div>`;
+}
+
+/* Riferimenti riservati alla regia: cronologia reale, elementi da tenere per sé, matrice delle deleghe. */
+function TabellaDeleghe({ rows }) {
+  return html`<div className="tbl-wrap"><table><thead><tr><th>Comunicazione o azione</th><th>Prepara</th><th>Autorizza</th><th>Invia o firma</th><th>Dove lo dicono i piani</th></tr></thead><tbody>
+    ${rows.slice().sort((a, b) => a.ordine - b.ordine).map(r => html`<tr key=${r.id}><td>${r.comunicazione}</td><td>${r.prepara}</td><td>${r.autorizza}</td><td>${r.invia}</td>
+      <td className=${/lacuna|non citano|Nessuno/i.test(r.fonte) ? 'miss' : ''}>${r.fonte}</td></tr>`)}
+  </tbody></table></div>`;
+}
+function ScenarioRegia({ d }) {
+  const ev = d.cronologia.filter(c => c.tipo === 'evento').sort((a, b) => a.ordine - b.ordine);
+  const ris = d.cronologia.filter(c => c.tipo === 'riservato').sort((a, b) => a.ordine - b.ordine);
+  return html`<div className="page" style=${{ maxWidth: '1100px' }}>
+    <h2>Scenario</h2>
+    <p className="hint" style=${{ marginTop: '4px' }}>Riservato alla regia: le squadre scoprono questi elementi un pezzo alla volta.</p>
+    <div className="section"><h3>Cosa è successo davvero</h3>
+      ${ev.length ? html`<div className="tbl-wrap"><table><thead><tr><th style=${{ width: '210px' }}>Quando</th><th>Cosa</th></tr></thead><tbody>
+        ${ev.map(c => html`<tr key=${c.id}><td className="n">${c.quando}</td><td>${c.cosa}</td></tr>`)}
+      </tbody></table></div>` : html`<p className="empty">Cronologia non caricata.</p>`}
+    </div>
+    <div className="section"><h3>Da tenere per sé</h3>
+      <p className="hint">Emergono solo se i team fanno le domande giuste.</p>
+      <ul style=${{ marginTop: '8px', lineHeight: 1.55 }}>${ris.map(c => html`<li key=${c.id}>${c.cosa}</li>`)}</ul>
+    </div>
+    <div className="section"><h3>Chi può comunicare cosa</h3>
+      <p className="hint">La matrice su cui si dà il verdetto sulle deleghe. Dove decide l'Incident Manager su un tema tecnico, decide il facilitatore.</p>
+      ${d.deleghe.length ? html`<${TabellaDeleghe} rows=${d.deleghe}/>` : html`<p className="empty">Matrice non caricata.</p>`}
     </div>
   </div>`;
 }
