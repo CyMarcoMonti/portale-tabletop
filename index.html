@@ -889,7 +889,7 @@ function routeOf(f, who, myTeam) {
   if (f.kind === 'esterna') return html`<span>${who.teamName(f.from_team)}</span><span className="arr">a</span><b>${destText(f)}</b>
     ${f.canale ? html`<span className="tag">${f.canale}</span>` : null}
     ${f.diretta ? html`<span className="tag warn">Senza autorizzazione</span>` : null}
-    ${nonInformata(f) ? html`<span className="tag warn">Non informata</span>` : null}
+    ${nonInformata(f) && !myTeam ? html`<span className="tag warn">Non informata</span>` : null}
     ${autonoma(f) && f.informata_at && f.to_team ? html`<span className="tag">${myTeam === f.to_team ? 'Per conoscenza' : 'Informata ' + who.teamName(f.to_team)}</span>` : null}`;
   if (f.kind === 'canale' && f.tipo === 'Informativa') return html`<span className="tag">Informativa</span><span>${myTeam && f.to_team === myTeam ? 'Da ' + who.teamName(f.from_team) : 'A ' + who.teamName(f.to_team)}</span>`;
   if (myTeam && f.to_team === myTeam) return html`<span>Da ${who.teamName(f.from_team)}</span>`;
@@ -964,7 +964,7 @@ function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen
         ${f.decided_at && !f.diretta ? html`<dt>${decisioneLbl}</dt><dd>${f.stato === 'respinto' ? 'Respinta' : (isExt ? 'Autorizzata' : 'Approvata')} da ${persona(f.decided_by, f.decided_ruolo)} alle ${ora(f.decided_at)}${f.to_team && !autonoma(f) ? ' (dopo ' + durata(f.created_at, f.decided_at) + ')' : ''}</dd>` : null}
         ${f.nota_decisione ? html`<dt>Nota</dt><dd>${f.nota_decisione}</dd>` : null}
         ${f.diretta ? html`<dt>${decisioneLbl}</dt><dd><span className="tag warn">Nessuna: inviata direttamente</span></dd>` : null}
-        ${autonoma(f) && f.stato === 'inviato' ? html`<dt>Informativa</dt><dd>${f.informata_at
+        ${autonoma(f) && f.stato === 'inviato' && (f.informata_at || isMaster) ? html`<dt>Informativa</dt><dd>${f.informata_at
           ? html`A ${who.teamName(f.to_team)} alle ${ora(f.informata_at)}${f.informativa_flow && hasFlow && hasFlow(f.informativa_flow) ? html` · <button className="link" onClick=${() => onOpen(f.informativa_flow)}>apri</button>` : null}`
           : html`<span className="miss">non ancora inviata all'altra stanza</span>`}</dd>` : null}
         ${f.inviato_at ? html`<dt>Inviata</dt><dd>da ${who.name(f.inviato_by)} alle ${ora(f.inviato_at)}</dd>` : null}
@@ -976,7 +976,7 @@ function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen
 
     ${autonoma(f) && toMe && !mine && !isMaster ? html`<section className="panel info">
       <h3>Per conoscenza</h3>
-      <p className="hint">${who.teamName(f.from_team)} l'ha inviata in autonomia a ${destText(f)} alle ${ora(f.inviato_at)} e vi ha mandato un'informativa. Non dovete decidere nulla: se serve, ratificate o chiedete una correzione.</p>
+      <p className="hint">${who.teamName(f.from_team)} l'ha inviata a ${destText(f)} alle ${ora(f.inviato_at)}.</p>
       ${part ? html`<div className="actions"><button id="btn-reply-team" className="btn plain" onClick=${() => onCompose({ kind: 'canale', prefill: { to: f.from_team, tipo: tipoAgg, titolo: 'Re: ' + f.titolo, rif: f.id, testo: '' } })}>Rispondi a ${who.teamName(f.from_team)}</button></div>` : null}
     </section>` : null}
 
@@ -1016,7 +1016,7 @@ function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen
       ${!msgs.length ? html`<p className="empty">${f.stato === 'in_attesa' ? 'Si potrà scrivere dopo la decisione.' : 'Nessun messaggio.'}</p>` : null}
       ${canPost ? html`<${Composer} id="post-text" onSend=${t => act(sb.rpc('post_message', { p_flow: f.id, p_testo: t }))}
         placeholder=${f.kind === 'situazione' ? 'Rispondi a ' + f.voce + '…' : 'Scrivi all\'altra squadra…'}/>` : null}
-      ${part && isExt && f.stato === 'inviato' ? html`<p className="hint" style=${{ marginTop: '8px' }}>Per integrare o correggere serve una nuova comunicazione, da autorizzare di nuovo.</p>` : null}
+      ${part && isExt && f.stato === 'inviato' ? html`<p className="hint" style=${{ marginTop: '8px' }}>Per integrare o correggere serve una nuova comunicazione.</p>` : null}
       ${canClose ? html`<div className="actions"><button className="btn plain small" disabled=${busy}
         onClick=${() => { if (window.confirm('Chiudere questo flusso? Resterà leggibile ma non si potrà più scrivere.')) act(sb.rpc('close_flow', { p_id: f.id }), 'Chiuso'); }}>Chiudi il flusso</button></div>` : null}
     </section>
@@ -1026,39 +1026,27 @@ function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen
   </div>`;
 }
 
-/* Informativa scritta all'altra stanza su ciò che si è fatto in autonomia (modello del piano incidenti: cosa, quando, impatto). */
+/* Messaggio all'altra stanza su una comunicazione inviata in autonomia: testo libero, nessuna traccia suggerita. */
 function InformativaForm({ f, who, me, ops, onDone }) {
   const targets = who.others(me.team);
   const def = (who.authorizers(me.team)[0] || targets[0] || {}).id || '';
+  const [open, setOpen] = useState(false);
   const [to, setTo] = useState(def);
-  const [v, setV] = useState({ cosa: '', quando: '', impatto: '', perche: '', serve: '' });
+  const [testo, setTesto] = useState('');
   const [busy, setBusy] = useState(false);
-  const set = k => e => setV({ ...v, [k]: e.target.value });
-  const inviato = f ? '«' + f.titolo + '» a ' + destText(f) + (f.canale ? ', via ' + f.canale : '') + ', alle ' + ora(f.inviato_at) : '';
-  const testo = [['Cosa', v.cosa], ['Quando', v.quando], ['Impatto', v.impatto], ['Cosa abbiamo inviato e a chi', inviato],
-    ['Perché in autonomia', v.perche], ['Cosa serve ora', v.serve]]
-    .filter(([, x]) => x && x.trim()).map(([k, x]) => k + ': ' + x.trim()).join('\n\n');
-  const ok = to && v.cosa.trim() && v.perche.trim() && !busy;
   const send = async () => {
     setBusy(true);
-    const r = await ops.run(sb.rpc('send_informativa', { p_flow: f ? f.id : null, p_to: to, p_titolo: 'Informativa: ' + (f ? f.titolo : v.cosa.trim().slice(0, 60)), p_testo: testo }),
-      ['flows'], 'Informativa inviata a ' + who.teamName(to));
+    const r = await ops.run(sb.rpc('send_informativa', { p_flow: f.id, p_to: to, p_titolo: f.titolo, p_testo: testo.trim() }),
+      ['flows'], 'Inviato a ' + who.teamName(to));
     setBusy(false);
     if (!r.error && onDone) onDone(r.data);
   };
-  return html`<section className="panel info" id="informativa">
-    <h3>Informativa all'altra stanza</h3>
-    <p className="hint">L'avete inviata senza passare dall'altra stanza: resta segnata «non informata» finché non mandate un'informativa scritta.</p>
+  if (!open) return html`<div className="actions" style=${{ maxWidth: '780px' }}><button id="btn-informa" className="btn plain small" onClick=${() => setOpen(true)}>Scrivi a ${targets.length === 1 ? targets[0].nome : 'un\'altra squadra'} su questo invio</button></div>`;
+  return html`<section className="panel" id="informativa">
     ${targets.length > 1 ? html`<${Field} label="A quale squadra"><select id="inf-to" value=${to} onChange=${e => setTo(e.target.value)}>${targets.map(t => html`<option key=${t.id} value=${t.id}>${t.nome}</option>`)}</select><//>` : null}
-    <div className="grid2">
-      <${Field} label="Cosa è successo"><textarea id="inf-cosa" value=${v.cosa} onChange=${set('cosa')}></textarea><//>
-      <${Field} label="Impatto"><textarea id="inf-impatto" value=${v.impatto} onChange=${set('impatto')}></textarea><//>
-      <${Field} label="Quando"><input id="inf-quando" type="text" value=${v.quando} onChange=${set('quando')} placeholder="Per esempio: dalle 9:10, tempo simulato"/><//>
-      <${Field} label="Perché in autonomia"><input id="inf-perche" type="text" value=${v.perche} onChange=${set('perche')}/><//>
-    </div>
-    <${Field} label="Cosa serve ora dall'altra stanza"><textarea id="inf-serve" value=${v.serve} onChange=${set('serve')}></textarea><//>
-    ${inviato ? html`<p className="hint" style=${{ marginTop: '8px' }}>Si aggiunge da solo: cosa avete inviato e a chi, ${inviato}.</p>` : null}
-    <div className="actions"><button id="inf-send" className="btn" disabled=${!ok} onClick=${send}>Invia l'informativa a ${who.teamName(to)}</button></div>
+    <${Field} label=${'Messaggio a ' + who.teamName(to)}><textarea id="inf-testo" value=${testo} onChange=${e => setTesto(e.target.value)}></textarea><//>
+    <div className="actions"><button id="inf-send" className="btn" disabled=${!testo.trim() || busy} onClick=${send}>Invia</button>
+      <button className="btn plain" onClick=${() => setOpen(false)}>Annulla</button></div>
   </section>`;
 }
 
@@ -1197,7 +1185,7 @@ function Compose({ kind, prefill, cfg, me, who, ops, onDone, onCancel }) {
   const tutti = [destinatario, ccn ? 'Ccn: ' + ccn : ''].filter(Boolean).join(' · ');
   const ok = titolo.trim() && testo.trim() && (isVoce ? !!voce : (!isExt || nDest) && (diretta || ((selfAuth || toTeam) && !noAuth)));
   const submit = async () => {
-    if (diretta && !window.confirm('Inviare subito a ' + tutti + ', senza autorizzazione? Non si potrà più modificare e resterà «non informata» finché non mandate l\'informativa.')) return;
+    if (diretta && !window.confirm('Inviare subito a ' + tutti + ', senza autorizzazione? Non si potrà più modificare.')) return;
     setBusy(true);
     let r;
     if (isVoce) {
@@ -1218,10 +1206,9 @@ function Compose({ kind, prefill, cfg, me, who, ops, onDone, onCancel }) {
     <input type="checkbox" checked=${!!sel[x]} onChange=${() => cycle(x)}/>${sel[x] === 'ccn' ? html`<small>Ccn</small>` : null}${x}</label>`;
   return html`<div className="doc" id="compose" style=${{ maxWidth: '780px' }}>
     <div className="doc-top"><span>${isVoce ? 'Nuova richiesta a una voce' : isExt ? 'Nuova comunicazione esterna' : 'Nuova richiesta a ' + other.nome}</span></div>
-    <p className="hint" style=${{ marginTop: '6px' }}>${isVoce
-      ? 'Per le decisioni tecniche scrivete all\'Incident Manager; potete scrivere anche al SOC, a R&D, all\'IT Operations o al supporto cloud. Risponde il facilitatore con il cartello della voce.'
-      : isExt ? 'Scrivetela come la leggerà il destinatario: ognuno risponde in base a ciò che ha ricevuto e da chi.'
-      : (toTeam ? other.nome : 'La squadra che scegliete') + ' la riceve e decide se approvarla. Dopo la decisione potete scrivervi nel flusso.'}</p>
+    ${!isExt ? html`<p className="hint" style=${{ marginTop: '6px' }}>${isVoce
+      ? 'Risponde il facilitatore con il cartello della voce.'
+      : (toTeam ? other.nome : 'La squadra che scegliete') + ' la riceve e decide se approvarla. Dopo la decisione potete scrivervi nel flusso.'}</p>` : null}
     ${isVoce ? html`<${Field} label="A chi"><select id="compose-voce" value=${voce} onChange=${e => setVoce(e.target.value)}>${vociScrivibili.map(v => html`<option key=${v}>${v}</option>`)}</select><//>` : null}
     ${isExt ? html`<div className="mode" role="radiogroup" aria-label="Come inviarla">
       <label className=${modo === 'autorizza' ? 'on' : ''}><input type="radio" name="modo" checked=${modo === 'autorizza'} disabled=${noAuth} onChange=${() => setModo('autorizza')}/>
@@ -1229,9 +1216,8 @@ function Compose({ kind, prefill, cfg, me, who, ops, onDone, onCancel }) {
           : selfAuth ? 'Sarà autorizzata subito e la potrete inviare. Resta visibile solo alla vostra squadra.'
           : 'Prima di partire la deve autorizzare ' + other.nome + '.'}</small></span></label>
       <label className=${modo === 'diretta' ? 'on' : ''}><input id="compose-diretta" type="radio" name="modo" checked=${modo === 'diretta'} onChange=${() => setModo('diretta')}/>
-        <span><b>Invia subito, senza autorizzazione</b><small>Per urgenze o compiti delegati. Parte subito, non si modifica più e resta agli atti come inviata senza autorizzazione.</small></span></label>
+        <span><b>Invia subito, senza autorizzazione</b><small>Parte subito e non si modifica più.</small></span></label>
     </div>` : null}
-    ${diretta ? html`<p className="hint" style=${{ marginTop: '8px' }}>Dopo l'invio resterà segnata «non informata» finché non mandate un'informativa scritta all'altra stanza: la trovate nel dettaglio della comunicazione.</p>` : null}
     ${!diretta && targets.length > 1 ? html`<${Field} label=${isExt ? 'Chi la autorizza' : 'A quale squadra'}>
       <select id="compose-to" value=${toTeam} onChange=${e => setToTeam(e.target.value)}>
         <option value="">Scegli…</option>${targets.map(t => html`<option key=${t.id} value=${t.id}>${t.nome}</option>`)}
@@ -1264,8 +1250,7 @@ function Compose({ kind, prefill, cfg, me, who, ops, onDone, onCancel }) {
         <option value="">Nessun modello</option>${cfg.modelli.map(m => html`<option key=${m.nome}>${m.nome}</option>`)}
       </select><//>` : null}
     <${Field} label="Oggetto"><input id="compose-titolo" type="text" value=${titolo} onChange=${e => setTitolo(e.target.value)}/><//>
-    <${Field} label=${isExt ? 'Testo della comunicazione' : 'Testo'}
-      hint=${isExt ? 'Sarà letta per tempestività, chiarezza, completezza, coerenza e correttezza di destinatario e firma.' : null}>
+    <${Field} label=${isExt ? 'Testo della comunicazione' : 'Testo'}>
       <textarea id="compose-testo" className=${isExt ? 'big' : ''} value=${testo} onChange=${e => setTesto(e.target.value)}></textarea><//>
     <div className="actions">
       <button id="compose-go" className="btn" disabled=${!ok || busy} onClick=${submit}>${isVoce ? 'Manda a ' + voce : isExt ? (diretta ? 'Invia subito' : selfAuth ? 'Salva e firma' : 'Manda per l\'autorizzazione') : 'Manda la richiesta'}</button>
@@ -1366,7 +1351,6 @@ function Room({ d, ops, me, onLogout, extra }) {
   useEffect(() => { if (!arrivo) return; const t = setTimeout(() => setArrivo(null), 15000); return () => clearTimeout(t); }, [arrivo]);
   const arrivoLbl = f => f.kind === 'situazione' ? 'Nuova situazione' : f.kind === 'esterna' ? (autonoma(f) ? 'Per conoscenza da ' + who.teamName(f.from_team) : 'Da autorizzare')
     : f.tipo === 'Informativa' ? 'Informativa da ' + who.teamName(f.from_team) : 'Richiesta da ' + who.teamName(f.from_team);
-  const daInformare = flows.filter(f => f.from_team === me.team && nonInformata(f));
   const tabs = [
     ['canale', 'Tra le stanze', unreadIn('canale'), 'canale'],
     ['esterna', 'Comunicazioni esterne', unreadIn('esterna'), 'esterna'],
@@ -1375,9 +1359,9 @@ function Room({ d, ops, me, onLogout, extra }) {
   ].concat(showMonitor ? [['monitor', 'Monitoraggio media', monUnread, 'monitor']] : []);
   const tabOf = k => (k === 'voce' ? 'situazione' : k);
   const emptyText = {
-    canale: 'Qui passano le richieste tra le due stanze. Scegline una dall\'elenco o aprine una nuova.',
-    esterna: 'Qui si preparano le comunicazioni verso clienti, partner, autorità, assicurazione e stampa. Valgono solo se autorizzate per iscritto.',
-    situazione: 'Qui arrivano i messaggi del SOC, dell\'IT Operations e degli esterni. Rispondi dentro la situazione o portala all\'altra squadra. Per una decisione tecnica, scrivi all\'Incident Manager con «Scrivi a una voce».',
+    canale: 'Qui passano le richieste tra le stanze. Scegline una dall\'elenco o aprine una nuova.',
+    esterna: 'Qui si preparano e si inviano le comunicazioni verso l\'esterno.',
+    situazione: 'Qui arrivano i messaggi di tecnici, clienti e altri attori. Con «Scrivi a una voce» potete scrivere voi a uno di loro.',
   };
   const ruoli = cfg.ruoli[me.team] || [];
 
@@ -1390,8 +1374,6 @@ function Room({ d, ops, me, onLogout, extra }) {
     <//>
     ${!me.preview && !me.ruolo ? html`<div className="notice">Scegli il tuo ruolo del piano: comparirà accanto al tuo nome su richieste, decisioni e messaggi.
       <button className="btn small" onClick=${() => setProfile(true)}>Scegli il ruolo</button></div>` : null}
-    ${daInformare.length && !me.preview ? html`<div className="notice">${daInformare.length === 1 ? 'Una comunicazione inviata in autonomia è ancora «non informata»' : daInformare.length + ' comunicazioni inviate in autonomia sono ancora «non informate»'}: mandate l'informativa all'altra stanza.
-      <button className="btn small" onClick=${() => open(daInformare[0].id)}>Apri</button></div>` : null}
     <${Tabs} tabs=${tabs} value=${tab} color=${team.colore} onChange=${t => { setTab(t); setSel(null); setCompose(null); }}/>
     ${tab === 'monitor' ? html`<${Monitor} items=${monItems} cfg=${cfg}/>` : tab === 'registro' ? html`<${Registro} d=${d} me=${me} who=${who} ops=${ops}/>` : html`
     <div className=${'work' + (sel || compose ? ' has-sel' : '')}>
@@ -1438,7 +1420,7 @@ const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const fmtPortata = n => n == null ? 'portata n.d.' : n >= 1000000 ? (n / 1000000).toFixed(1).replace('.', ',') + ' mln' : n >= 1000 ? Math.round(n / 1000) + 'k' : String(n);
 function Monitor({ items, cfg }) {
   const [full, setFull] = useState(false);
-  const [solo, setSolo] = useState(() => lsGet('mon:solo', true));
+  const [solo, setSolo] = useState(() => lsGet('mon:solo', false));
   const [canale, setCanale] = useState('tutti');
   const [tono, setTono] = useState('tutti');
   const [q, setQ] = useState('');
@@ -1547,16 +1529,16 @@ function Guida({ team, who, cfg, showMonitor, onClose }) {
   const altre = who.others(team.id).map(t => t.nome).join(', ') || 'l\'altra stanza';
   const autorizza = (who.authorizers(team.id)[0] || {}).nome;
   const passi = [
-    ['Benvenuti in ' + team.nome, html`<p>Lavorate come in una crisi vera: quello che arriva qui è tutto ciò che sapete. Nessuna risposta è giusta in partenza, conta come decidete e come comunicate.</p>
+    ['Benvenuti in ' + team.nome, html`<p>Lavorate come in una crisi vera: quello che arriva qui è tutto ciò che sapete.</p>
       <p style=${{ marginTop: '8px' }}>Per prima cosa scegli il tuo <b>ruolo del piano</b> dal tuo nome, in alto a destra: comparirà su ogni messaggio e decisione.</p>`],
     ['Dove arrivano le cose', html`<ul style=${{ margin: '0', paddingLeft: '18px', lineHeight: 1.55 }}>
       <li><b>Situazioni</b>: messaggi di tecnici, clienti, autorità e altri attori. Rispondete dentro la situazione o portatela a ${altre}.</li>
-      <li><b>Tra le stanze</b>: richieste, decisioni e informative con ${altre}.</li>
+      <li><b>Tra le stanze</b>: richieste e messaggi con ${altre}.</li>
       ${showMonitor ? html`<li><b>Monitoraggio media</b>: titoli, TG e post che citano ${cfg.azienda || 'l\'azienda'}.</li>` : null}
       <li>Quando arriva qualcosa compare un avviso in alto e, se lo lasci attivo, un suono.</li></ul>`],
-    ['Come comunicate all\'esterno', html`<p>In <b>Comunicazioni esterne</b> scrivete il testo come lo leggerà il destinatario: ognuno risponde in base a ciò che riceve e da chi.</p>
-      <p style=${{ marginTop: '8px' }}>${team.autorizza ? 'Le vostre comunicazioni le firmate voi.' : 'Prima di partire le autorizza ' + (autorizza || 'la squadra che autorizza') + '.'} In caso di urgenza potete inviare subito, senza autorizzazione: poi va mandata un'informativa all'altra stanza.</p>`],
-    ['Tenete traccia', html`<p>Nel <b>${team.autorizza ? 'Log delle decisioni' : 'Registro ufficiale'}</b> annotate cosa avete deciso, chi e perché: nella discussione finale i registri delle stanze si mettono uno accanto all'altro.</p>
+    ['Come comunicate all\'esterno', html`<p>In <b>Comunicazioni esterne</b> scrivete e inviate le comunicazioni verso l'esterno: arrivano al destinatario così come le scrivete.</p>
+      <p style=${{ marginTop: '8px' }}>${team.autorizza ? 'Potete firmarle voi.' : 'Potete farle autorizzare da ' + (autorizza || 'un\'altra squadra') + ' oppure inviarle subito.'}</p>`],
+    ['Registro e schermo', html`<p>Il <b>${team.autorizza ? 'Log delle decisioni' : 'Registro ufficiale'}</b> è il registro della vostra stanza: ogni voce resta agli atti.</p>
       <p style=${{ marginTop: '8px' }}>Con <b>Schermo</b>, nella banda in alto, la stanza si proietta sulla TV: orologio della crisi, ultim'ora e ciò che arriva.</p>`],
   ];
   const [titolo, corpo] = passi[i];
@@ -1606,7 +1588,7 @@ function Registro({ d, me, who, ops }) {
   const comitato = !!(who.team(me.team) || {}).autorizza;
   return html`<div className="page" id="registro">
     <h2>${comitato ? 'Log delle decisioni' : 'Registro ufficiale dell\'incidente'}</h2>
-    <p className="hint" style=${{ marginTop: '4px', maxWidth: '68ch' }}>${comitato ? 'Lo tiene lo Scribe del Comitato di Crisi. ' : 'Lo apre e lo tiene la gestione operativa, a partire dalla dichiarazione dell\'incidente. '}Ogni voce resta agli atti con orario, tempo simulato e autore, e non si modifica. Nella discussione finale i registri delle squadre vengono messi uno accanto all'altro. Per correggere, aggiungi una nuova voce.</p>
+    <p className="hint" style=${{ marginTop: '4px', maxWidth: '68ch' }}>Ogni voce resta agli atti con orario, tempo simulato e autore, e non si modifica.</p>
     ${!me.preview ? html`<div style=${{ maxWidth: '780px' }}><${Composer} id="reg-text" label="Aggiungi al registro"
       placeholder="Cosa è stato deciso, da chi e perché…" onSend=${t => ops.run(sb.rpc('add_registro', { p_testo: t }), ['registro'], 'Aggiunta al registro')}/></div>` : null}
     <ol className="reg">${entries.map(r => html`<li key=${r.id}>
