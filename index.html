@@ -232,6 +232,13 @@ td.n{white-space:nowrap}
 .section{margin-top:30px}
 .people{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px;margin-top:12px}
 .person{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--soft)}
+.chi-lista{display:grid;gap:6px;margin-top:10px;max-height:46vh;overflow:auto}
+.chi{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:var(--r);padding:4px 10px 4px 4px;background:#fff}
+.chi.on{border-color:var(--ink);box-shadow:inset 4px 0 0 var(--ink)}
+.chi-sel{flex:1;display:flex;flex-direction:column;align-items:flex-start;background:none;border:0;padding:6px 8px;text-align:left;cursor:pointer;font:inherit;color:inherit}
+.chi-sel span{font-size:13px;color:var(--muted)}
+.chi.on .chi-sel b::after{content:' · agisce adesso';font-weight:400;font-size:12px;color:var(--muted)}
+.btn-chi{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* accesso */
 .gate{min-height:100vh;display:grid;place-items:center;padding:24px}
@@ -617,7 +624,7 @@ function faseAt(fasi, ts) {
 }
 
 /* ---------- dati condivisi + tempo reale ---------- */
-const T_ALL = ['campaign', 'campaign_fasi', 'teams', 'members', 'flows', 'messages', 'registro', 'monitor'];
+const T_ALL = ['campaign', 'campaign_fasi', 'teams', 'members', 'flows', 'messages', 'registro', 'monitor', 'persone'];
 const T_MASTER = ['settings', 'team_codes', 'copione', 'valutazioni', 'fiducia', 'flow_events', 'previste', 'attori', 'punti', 'tappe', 'bivi', 'cronologia', 'deleghe', 'osservazioni', 'osservatori'];
 const SINGLE = { campaign: 1, settings: 1 };
 // cosa carica ciascuno: la regia tutto, le squadre il necessario, gli osservatori anche note e punti dei piani
@@ -626,7 +633,7 @@ const TABELLE = { master: T_ALL.concat(T_MASTER), member: T_ALL, observer: T_ALL
 function useData(mode) {
   const isMaster = mode === 'master';
   const [d, setD] = useState({ loaded: false, campaign: null, settings: null, team_codes: [], campaign_fasi: [], teams: [], members: [],
-    flows: [], messages: [], registro: [], monitor: [], copione: [], valutazioni: [], fiducia: [], flow_events: [],
+    flows: [], messages: [], registro: [], monitor: [], persone: [], copione: [], valutazioni: [], fiducia: [], flow_events: [],
     previste: [], attori: [], punti: [], tappe: [], bivi: [], cronologia: [], deleghe: [], osservazioni: [], osservatori: [] });
   const [err, setErr] = useState('');
   const load = useCallback(async t => {
@@ -651,7 +658,7 @@ function useData(mode) {
       }, 200);
     };
     let ch = sb.channel('tt-' + Math.random().toString(36).slice(2));
-    ['flows', 'messages', 'members', 'campaign', 'registro', 'teams', 'monitor'].concat(mode === 'member' ? [] : ['osservazioni']).forEach(t => {
+    ['flows', 'messages', 'members', 'campaign', 'registro', 'teams', 'monitor', 'persone'].concat(mode === 'member' ? [] : ['osservazioni']).forEach(t => {
       ch = ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, () => later(t));
     });
     ch.subscribe();
@@ -946,7 +953,8 @@ function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen
     }
   };
   const decisioneLbl = isExt ? 'Autorizzazione' : 'Decisione';
-  const persona = (id, ruolo) => who.name(id) + (ruolo ? ', ' + ruolo : '');
+  // la firma salvata al momento dell'azione (chi agiva su quel PC), altrimenti il nome dell'account
+  const persona = (nome, id, ruolo) => (nome || who.name(id)) + (ruolo ? ', ' + ruolo : '');
 
   return html`<div>
     ${onBack ? html`<button className="btn plain small back" onClick=${onBack}>Torna all'elenco</button>` : null}
@@ -957,18 +965,18 @@ function FlowDetail({ f, msgs, d, who, me, ops, cfg, isMaster, onCompose, onOpen
       <dl className="meta">
         ${f.kind === 'situazione' && !f.richiesta
           ? html`<dt>Arrivata</dt><dd>${ora(f.created_at)}${f.tempo_sim ? ' — ' + f.tempo_sim : ''}</dd>`
-          : html`<dt>${f.richiesta ? 'Chiesta da' : 'Aperta da'}</dt><dd>${persona(f.opened_by, f.opened_ruolo)} alle ${ora(f.created_at)}${f.tempo_sim ? ' — ' + f.tempo_sim : ''}</dd>`}
+          : html`<dt>${f.richiesta ? 'Chiesta da' : 'Aperta da'}</dt><dd>${persona(f.opened_nome, f.opened_by, f.opened_ruolo)} alle ${ora(f.created_at)}${f.tempo_sim ? ' — ' + f.tempo_sim : ''}</dd>`}
         ${isExt && f.canale ? html`<dt>Canale</dt><dd>${f.canale}</dd>` : null}
         ${isExt && f.ccn ? html`<dt>Copia nascosta</dt><dd>${f.ccn}</dd>` : null}
         ${f.modello ? html`<dt>Modello</dt><dd>Partita da «${f.modello}»${isMaster && modello ? html` <span className=${'tag' + (scarto(f.motivo, modello.testo) < 15 ? ' warn' : '')}>${scarto(f.motivo, modello.testo) < 15 ? 'usato quasi così com\'è' : 'adattato'} · scarto ${scarto(f.motivo, modello.testo)}%</span>` : null}</dd>` : null}
-        ${f.decided_at && !f.diretta ? html`<dt>${decisioneLbl}</dt><dd>${f.stato === 'respinto' ? 'Respinta' : (isExt ? 'Autorizzata' : 'Approvata')} da ${persona(f.decided_by, f.decided_ruolo)} alle ${ora(f.decided_at)}${f.to_team && !autonoma(f) ? ' (dopo ' + durata(f.created_at, f.decided_at) + ')' : ''}</dd>` : null}
+        ${f.decided_at && !f.diretta ? html`<dt>${decisioneLbl}</dt><dd>${f.stato === 'respinto' ? 'Respinta' : (isExt ? 'Autorizzata' : 'Approvata')} da ${persona(f.decided_nome, f.decided_by, f.decided_ruolo)} alle ${ora(f.decided_at)}${f.to_team && !autonoma(f) ? ' (dopo ' + durata(f.created_at, f.decided_at) + ')' : ''}</dd>` : null}
         ${f.nota_decisione ? html`<dt>Nota</dt><dd>${f.nota_decisione}</dd>` : null}
         ${f.diretta ? html`<dt>${decisioneLbl}</dt><dd><span className="tag warn">Nessuna: inviata direttamente</span></dd>` : null}
         ${autonoma(f) && f.stato === 'inviato' && (f.informata_at || isMaster) ? html`<dt>Informativa</dt><dd>${f.informata_at
           ? html`A ${who.teamName(f.to_team)} alle ${ora(f.informata_at)}${f.informativa_flow && hasFlow && hasFlow(f.informativa_flow) ? html` · <button className="link" onClick=${() => onOpen(f.informativa_flow)}>apri</button>` : null}`
           : html`<span className="miss">non ancora inviata all'altra stanza</span>`}</dd>` : null}
-        ${f.inviato_at ? html`<dt>Inviata</dt><dd>da ${who.name(f.inviato_by)} alle ${ora(f.inviato_at)}</dd>` : null}
-        ${f.closed_at ? html`<dt>Chiusa</dt><dd>da ${who.name(f.closed_by)} alle ${ora(f.closed_at)}</dd>` : null}
+        ${f.inviato_at ? html`<dt>Inviata</dt><dd>da ${f.inviato_nome || who.name(f.inviato_by)} alle ${ora(f.inviato_at)}</dd>` : null}
+        ${f.closed_at ? html`<dt>Chiusa</dt><dd>da ${f.closed_nome || who.name(f.closed_by)} alle ${ora(f.closed_at)}</dd>` : null}
         ${f.rif && hasFlow && hasFlow(f.rif) ? html`<dt>Collegata a</dt><dd><button className="link" onClick=${() => onOpen(f.rif)}>apri il flusso precedente</button></dd>` : null}
       </dl>
       ${f.motivo ? html`<div className="body">${f.motivo}</div>` : null}
@@ -1054,7 +1062,7 @@ function Msg({ m, who, isMaster }) {
   const isVoce = !!m.voce;
   return html`<div className=${'msg' + (isVoce ? ' voce' : '')} style=${isVoce ? null : { '--mc': who.teamColor(m.team_id) }}>
     <div className="h">
-      ${isVoce ? html`<${Avatar} nome=${m.voce}/><span className="placard">${m.voce}</span>` : html`<b>${who.name(m.author)}</b>${m.ruolo ? html`<span>${m.ruolo}</span>` : null}<span>${who.teamName(m.team_id)}</span>`}
+      ${isVoce ? html`<${Avatar} nome=${m.voce}/><span className="placard">${m.voce}</span>` : html`<b>${m.autore_nome || who.name(m.author)}</b>${m.ruolo ? html`<span>${m.ruolo}</span>` : null}<span>${who.teamName(m.team_id)}</span>`}
       <time>${ora(m.created_at)}</time>
       ${isMaster && m.solo_team ? html`<span className="tag">visibile solo a ${who.teamName(m.solo_team)}</span>` : null}
     </div>
@@ -1084,7 +1092,7 @@ function VoiceComposer({ f, d, cfg, who, ops }) {
   // rubrica degli attori: chi può scrivergli secondo i piani e come reagisce se riceve ciò che non dovrebbe
   const attore = ((d && d.attori) || []).find(a => a.nome === voce);
   const mittente = f.richiesta || f.kind !== 'situazione'
-    ? who.name(f.opened_by) + (f.opened_ruolo ? ', ' + f.opened_ruolo : '') + ' — ' + who.teamName(f.from_team || f.to_team) : '';
+    ? (f.opened_nome || who.name(f.opened_by)) + (f.opened_ruolo ? ', ' + f.opened_ruolo : '') + ' — ' + who.teamName(f.from_team || f.to_team) : '';
   return html`<section className="panel regia">
     <h3>Rispondi come una voce</h3>
     <p className="hint">Il messaggio arriva con il cartello della voce scelta. ${f.kind === 'esterna' ? 'Ogni destinatario risponde per conto suo, in base a ciò che ha ricevuto e da chi. Un avviso vago genera domande; una notifica incompleta torna indietro con richieste di integrazione.' : ''}</p>
@@ -1282,6 +1290,7 @@ function Room({ d, ops, me, onLogout, extra }) {
   const [compose, setCompose] = useState(null);
   const [mine, setMine] = useState(false);
   const [profile, setProfile] = useState(false);
+  const [chi, setChi] = useState(false);
   const [schermo, setSchermo] = useState(false);
   const [guida, setGuida] = useState(() => !me.preview && !lsGet('guida:' + me.team, false));
   const chiudiGuida = () => { lsSet('guida:' + me.team, true); setGuida(false); };
@@ -1364,16 +1373,19 @@ function Room({ d, ops, me, onLogout, extra }) {
     situazione: 'Qui arrivano i messaggi di tecnici, clienti e altri attori. Con «Scrivi a una voce» potete scrivere voi a uno di loro.',
   };
   const ruoli = cfg.ruoli[me.team] || [];
+  // PC condiviso: chi sta agendo adesso firma tutto ciò che parte da qui
+  const presenti = d.persone.filter(p => p.team_id === me.team);
+  const agisce = presenti.find(p => p.id === me.persona_id);
 
   return html`<div className="app">
     <${Band} color=${team.colore} title=${team.nome} sub=${me.preview ? 'Anteprima in sola lettura' : cfg.titolo} campaign=${d.campaign} logo=${cfg.logo}>
       <button className="btn-light" id="btn-schermo" title="Vista a tutto schermo per la TV della stanza" onClick=${() => setSchermo(true)}><${Icon} n="schermo"/> Schermo</button>
       ${!me.preview ? html`<button className="btn-light" id="btn-guida" title="Come funziona" onClick=${() => setGuida(true)}><${Icon} n="guida"/></button>
-        <button className="btn-light" id="btn-profile" onClick=${() => setProfile(true)}>${me.nome}<small>${me.ruolo || 'Scegli il ruolo'}</small></button>
+        <button className="btn-light btn-chi" id="btn-chi" title="Chi sta agendo da questo PC" onClick=${() => setChi(true)}>${agisce ? agisce.nome : me.nome}<small>${agisce ? (agisce.ruolo || 'senza ruolo') : (me.ruolo || 'Chi agisce?')} ▾</small></button>
         <button className="btn-light" onClick=${onLogout}>Esci</button>` : extra || null}
     <//>
-    ${!me.preview && !me.ruolo ? html`<div className="notice">Scegli il tuo ruolo del piano: comparirà accanto al tuo nome su richieste, decisioni e messaggi.
-      <button className="btn small" onClick=${() => setProfile(true)}>Scegli il ruolo</button></div>` : null}
+    ${!me.preview && !agisce && (presenti.length || !me.ruolo) ? html`<div className="notice">Indica chi sta agendo da questo PC: nome e ruolo firmano richieste, decisioni, invii, messaggi e registro.
+      <button id="btn-chi-avviso" className="btn small" onClick=${() => setChi(true)}>Chi agisce</button></div>` : null}
     <${Tabs} tabs=${tabs} value=${tab} color=${team.colore} onChange=${t => { setTab(t); setSel(null); setCompose(null); }}/>
     ${tab === 'monitor' ? html`<${Monitor} items=${monItems} cfg=${cfg}/>` : tab === 'registro' ? html`<${Registro} d=${d} me=${me} who=${who} ops=${ops}/>` : html`
     <div className=${'work' + (sel || compose ? ' has-sel' : '')}>
@@ -1407,6 +1419,7 @@ function Room({ d, ops, me, onLogout, extra }) {
     </div>` : null}
     ${schermo ? html`<${Schermo} d=${d} team=${team} cfg=${cfg} who=${who} onClose=${() => setSchermo(false)}/>` : null}
     ${guida ? html`<${Guida} team=${team} who=${who} cfg=${cfg} showMonitor=${showMonitor} onClose=${chiudiGuida}/>` : null}
+    ${chi ? html`<${ChiAgisce} d=${d} me=${me} ops=${ops} ruoli=${ruoli} onClose=${() => setChi(false)} onProfilo=${() => { setChi(false); setProfile(true); }}/>` : null}
     ${profile ? html`<${Profile} me=${me} ruoli=${ruoli} ops=${ops} onClose=${() => setProfile(false)}/>` : null}
     <${Toast} t=${ops.toast}/>
   </div>`;
@@ -1530,7 +1543,7 @@ function Guida({ team, who, cfg, showMonitor, onClose }) {
   const autorizza = (who.authorizers(team.id)[0] || {}).nome;
   const passi = [
     ['Benvenuti in ' + team.nome, html`<p>Lavorate come in una crisi vera: quello che arriva qui è tutto ciò che sapete.</p>
-      <p style=${{ marginTop: '8px' }}>Per prima cosa scegli il tuo <b>ruolo del piano</b> dal tuo nome, in alto a destra: comparirà su ogni messaggio e decisione.</p>`],
+      <p style=${{ marginTop: '8px' }}>Per prima cosa indica <b>chi agisce</b> da questo PC, dal nome in alto a destra: nome e ruolo del piano compariranno su ogni messaggio e decisione. Se il PC passa di mano, cambialo lì.</p>`],
     ['Dove arrivano le cose', html`<ul style=${{ margin: '0', paddingLeft: '18px', lineHeight: 1.55 }}>
       <li><b>Situazioni</b>: messaggi di tecnici, clienti, autorità e altri attori. Rispondete dentro la situazione o portatela a ${altre}.</li>
       <li><b>Tra le stanze</b>: richieste e messaggi con ${altre}.</li>
@@ -1582,6 +1595,50 @@ function Profile({ me, ruoli, ops, onClose }) {
   <//>`;
 }
 
+/* PC condiviso: le persone della squadra presenti in sala e chi sta agendo adesso da questo PC. */
+function ChiAgisce({ d, me, ops, ruoli, onClose, onProfilo }) {
+  const persone = d.persone.filter(p => p.team_id === me.team).sort((a, b) => a.nome.localeCompare(b.nome));
+  const [nome, setNome] = useState('');
+  const [ruolo, setRuolo] = useState('');
+  const [busy, setBusy] = useState(false);
+  const scegli = async (id, chi) => {
+    setBusy(true);
+    const r = await ops.run(sb.rpc('set_persona', { p_id: id }), ['members'], id ? 'Ora agisce ' + chi : 'Ora agisci con il tuo account');
+    setBusy(false);
+    if (!r.error) onClose();
+  };
+  const aggiungi = async () => {
+    setBusy(true);
+    const r = await ops.run(sb.from('persone').insert({ team_id: me.team, nome: nome.trim(), ruolo }).select().single(), ['persone']);
+    setBusy(false);
+    if (!r.error && r.data) await scegli(r.data.id, r.data.nome);
+  };
+  const togli = p => { if (window.confirm('Togliere ' + p.nome + ' dalle persone in sala? Le firme già date restano.')) ops.run(sb.from('persone').delete().eq('id', p.id), ['persone', 'members']); };
+  return html`<${Modal} onClose=${onClose}>
+    <h2>Chi agisce da questo PC?</h2>
+    <p className="hint" style=${{ marginTop: '4px' }}>Nome e ruolo scelti firmano richieste, decisioni, invii, messaggi e registro. Quando la tastiera passa a un altro, cambialo qui.</p>
+    <div className="chi-lista">
+      ${persone.map(p => html`<div key=${p.id} className=${'chi' + (p.id === me.persona_id ? ' on' : '')}>
+        <button className="chi-sel" disabled=${busy} onClick=${() => scegli(p.id, p.nome)}><b>${p.nome}</b><span>${p.ruolo || 'senza ruolo'}</span></button>
+        <button className="link" onClick=${() => togli(p)}>togli</button>
+      </div>`)}
+      ${!persone.length ? html`<p className="empty">Nessuno ancora: aggiungi chi è in sala con la squadra.</p>` : null}
+    </div>
+    <h3 style=${{ marginTop: '14px' }}>Aggiungi una persona in sala</h3>
+    <div className="grid2">
+      <${Field} label="Nome"><input id="chi-nome" type="text" value=${nome} onChange=${e => setNome(e.target.value)}/><//>
+      <${Field} label="Ruolo del piano"><select id="chi-ruolo" value=${ruolo} onChange=${e => setRuolo(e.target.value)}>
+        <option value="">Nessuno</option>${ruoli.map(r => html`<option key=${r}>${r}</option>`)}</select><//>
+    </div>
+    <div className="actions">
+      <button id="chi-aggiungi" className="btn" disabled=${busy || !nome.trim()} onClick=${aggiungi}>Aggiungi e fai agire</button>
+      ${me.persona_id ? html`<button className="btn plain" disabled=${busy} onClick=${() => scegli(null)}>Agisci come ${me.nome}</button>` : null}
+      <span style=${{ flex: 1 }}></span>
+      <button className="link" onClick=${onProfilo}>Il tuo account: ruolo, suono e password</button>
+    </div>
+  <//>`;
+}
+
 function Registro({ d, me, who, ops }) {
   const entries = d.registro.filter(r => r.team_id === me.team).sort((a, b) => byTime(b, a));
   // il Comitato tiene il Log delle decisioni (Scribe), la gestione operativa il Registro ufficiale dell'incidente
@@ -1593,7 +1650,7 @@ function Registro({ d, me, who, ops }) {
       placeholder="Cosa è stato deciso, da chi e perché…" onSend=${t => ops.run(sb.rpc('add_registro', { p_testo: t }), ['registro'], 'Aggiunta al registro')}/></div>` : null}
     <ol className="reg">${entries.map(r => html`<li key=${r.id}>
       <div><time>${ora(r.created_at)}</time><span className="sim">${r.tempo_sim || ''}</span></div>
-      <div><div className="x">${r.testo}</div><div className="by">${who.name(r.author)}${r.ruolo ? ', ' + r.ruolo : ''}${r.fase ? ' — ' + r.fase : ''}</div></div>
+      <div><div className="x">${r.testo}</div><div className="by">${r.autore_nome || who.name(r.author)}${r.ruolo ? ', ' + r.ruolo : ''}${r.fase ? ' — ' + r.fase : ''}</div></div>
     </li>`)}</ol>
     ${!entries.length ? html`<p className="empty" style=${{ marginTop: '12px' }}>Il registro è vuoto.</p>` : null}
   </div>`;
@@ -2193,13 +2250,13 @@ function cronologia(d, who) {
   const flow = id => d.flows.find(f => f.id === id) || {};
   const rows = [];
   d.flow_events.forEach(e => { const f = flow(e.flow_id); rows.push({ t: e.created_at, fase: e.fase || faseAt(d.campaign_fasi, e.created_at), cosa: EVENTI[e.evento] || e.evento,
-    squadra: e.team_id === 'regia' ? 'Regia' : who.teamName(e.team_id), chi: e.team_id === 'regia' && f.kind === 'situazione' ? f.voce : who.name(e.user_id),
-    ruolo: (who.member(e.user_id) || {}).ruolo || '', flusso: f.titolo || '', verso: f.kind === 'esterna' ? destText(f) : '', tipo: KIND_LABEL[f.kind] || '',
+    squadra: e.team_id === 'regia' ? 'Regia' : who.teamName(e.team_id), chi: e.team_id === 'regia' && f.kind === 'situazione' ? f.voce : e.nome || who.name(e.user_id),
+    ruolo: e.ruolo || (who.member(e.user_id) || {}).ruolo || '', flusso: f.titolo || '', verso: f.kind === 'esterna' ? destText(f) : '', tipo: KIND_LABEL[f.kind] || '',
     testo: e.evento === 'aperto' || e.evento === 'situazione' ? f.motivo : (e.nota || ''), team: e.team_id }); });
   d.messages.forEach(m => { const f = flow(m.flow_id); rows.push({ t: m.created_at, fase: faseAt(d.campaign_fasi, m.created_at), cosa: m.voce ? 'Risposta di una voce' : 'Messaggio',
-    squadra: m.voce ? 'Regia' : who.teamName(m.team_id), chi: m.voce || who.name(m.author), ruolo: m.ruolo || '', flusso: f.titolo || '', verso: f.destinatario || '',
+    squadra: m.voce ? 'Regia' : who.teamName(m.team_id), chi: m.voce || m.autore_nome || who.name(m.author), ruolo: m.ruolo || '', flusso: f.titolo || '', verso: f.destinatario || '',
     tipo: KIND_LABEL[f.kind] || '', testo: m.testo, team: m.team_id || 'regia' }); });
-  d.registro.forEach(r => rows.push({ t: r.created_at, fase: r.fase || '', cosa: 'Registro', squadra: who.teamName(r.team_id), chi: who.name(r.author), ruolo: r.ruolo || '',
+  d.registro.forEach(r => rows.push({ t: r.created_at, fase: r.fase || '', cosa: 'Registro', squadra: who.teamName(r.team_id), chi: r.autore_nome || who.name(r.author), ruolo: r.ruolo || '',
     flusso: '', verso: '', tipo: 'Registro', testo: r.testo, team: r.team_id }));
   return rows.sort((a, b) => ms(a.t) - ms(b.t));
 }
@@ -2217,9 +2274,39 @@ function previsteStato(d) {
     return { c, fs, prep: fs[0], aut, inv, deleghe, media: vs.length ? (vs.reduce((a, b) => a + b, 0) / vs.length).toFixed(1) : '' };
   });
 }
+/* Chi ha fatto cosa, per firma: la persona scelta in «Chi agisce» al momento dell'azione, altrimenti l'account. */
+function partecipazione(d, who) {
+  const tab = new Map();
+  const riga = (team, nome, ruolo) => {
+    const chiave = team + '|' + nome;
+    if (!tab.has(chiave)) tab.set(chiave, { chiave, nome, team, ruolo, account: '', aperte: 0, decisioni: 0, invii: 0, messaggi: 0, registro: 0, tempi: [] });
+    return tab.get(chiave);
+  };
+  d.persone.forEach(p => riga(p.team_id, p.nome, p.ruolo));
+  const conta = (uid, nome, campo) => {
+    const m = d.members.find(x => x.user_id === uid);
+    if (!m) return null;
+    const r = riga(m.team_id, nome || m.nome, nome ? '' : m.ruolo);
+    if (nome && nome !== m.nome && !r.account.split(', ').includes(m.nome)) r.account = r.account ? r.account + ', ' + m.nome : m.nome;
+    if (campo) r[campo]++;
+    return r;
+  };
+  d.flows.forEach(f => {
+    if (f.opened_by && f.kind !== 'situazione') conta(f.opened_by, f.opened_nome, 'aperte');
+    if (f.decided_by && f.to_team) { const r = conta(f.decided_by, f.decided_nome, 'decisioni'); if (r && f.decided_at) r.tempi.push(ms(f.decided_at) - ms(f.created_at)); }
+    if (f.inviato_by) conta(f.inviato_by, f.inviato_nome, 'invii');
+  });
+  d.messages.forEach(x => { if (x.author) conta(x.author, x.autore_nome, 'messaggi'); });
+  d.registro.forEach(x => { if (x.author) conta(x.author, x.autore_nome, 'registro'); });
+  // gli account che non hanno ancora fatto nulla compaiono solo se la squadra non usa «Chi agisce»
+  d.members.forEach(m => { if (!d.persone.some(p => p.team_id === m.team_id)) conta(m.user_id, null, null); });
+  return Array.from(tab.values()).map(r => ({ ...r, risposta: r.tempi.length ? durata(0, r.tempi.reduce((a, b) => a + b, 0) / r.tempi.length) : '' }))
+    .sort((a, b) => who.ids.indexOf(a.team) - who.ids.indexOf(b.team) || a.nome.localeCompare(b.nome));
+}
+
 function exportSessione(d) {
   download('sessione-' + new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-') + '.json', JSON.stringify({
-    esportato: new Date().toISOString(), campaign: d.campaign, campaign_fasi: d.campaign_fasi, teams: d.teams, members: d.members, flows: d.flows,
+    esportato: new Date().toISOString(), campaign: d.campaign, campaign_fasi: d.campaign_fasi, teams: d.teams, members: d.members, persone: d.persone, flows: d.flows,
     messages: d.messages, registro: d.registro, flow_events: d.flow_events, valutazioni: d.valutazioni, fiducia: d.fiducia, copione: d.copione,
     monitor: d.monitor, previste: d.previste, tappe: d.tappe, bivi: d.bivi, punti: d.punti, osservazioni: d.osservazioni }, null, 2), 'application/json');
 }
@@ -2242,14 +2329,7 @@ function Debriefing({ d, cfg, who, goFlow, ops }) {
   const tappe = d.tappe.slice().sort((a, b) => a.ordine - b.ordine);
   const contaDeleghe = DELEGHE.map(([k, l]) => [l, d.valutazioni.filter(v => v.delega === k).length]);
   const delegaLbl = k => (DELEGHE.find(x => x[0] === k) || [])[1] || '';
-  const persone = d.members.map(m => {
-    const dec = d.flows.filter(f => f.decided_by === m.user_id && f.to_team);
-    const tempi = dec.map(f => ms(f.decided_at) - ms(f.created_at));
-    return { m, aperte: d.flows.filter(f => f.opened_by === m.user_id && f.kind !== 'situazione').length, decisioni: dec.length,
-      invii: d.flows.filter(f => f.inviato_by === m.user_id).length, messaggi: d.messages.filter(x => x.author === m.user_id).length,
-      registro: d.registro.filter(r => r.author === m.user_id).length,
-      risposta: tempi.length ? durata(0, tempi.reduce((a, b) => a + b, 0) / tempi.length) : '' };
-  });
+  const persone = partecipazione(d, who);
   const exportCrono = () => download('cronologia.csv', csv([['Ora', 'Fase', 'Evento', 'Squadra', 'Chi', 'Ruolo', 'Tipo', 'Flusso', 'Destinatario', 'Testo']]
     .concat(rows.map(r => [oraSec(r.t), r.fase, r.cosa, r.squadra, r.chi, r.ruolo, r.tipo, r.flusso, r.verso, r.testo]))), 'text/csv;charset=utf-8');
   const exportVal = () => download('valutazioni.csv', csv([['Flusso', 'Tipo', 'Destinatario', 'Copia nascosta', 'Canale', 'Squadra', 'Preparata', 'Inviata', 'Senza autorizzazione', 'Informativa', 'Comunicazione prevista', 'Verdetto deleghe'].concat(CRITERI.map(c => c[1])).concat(['Media', 'Note'])]
@@ -2292,7 +2372,7 @@ function Debriefing({ d, cfg, who, goFlow, ops }) {
         <div className="stat"><b className=${autonome.some(f => !f.informata_at) ? 'miss' : ''}>${autonome.filter(f => !f.informata_at).length}</b><span>senza informativa all'altra stanza</span></div>
       </div>
       ${autonome.length ? html`<div className="tbl-wrap"><table><thead><tr><th>Inviata</th><th>Da</th><th>Comunicazione</th><th>A</th><th>Come</th><th>Informativa</th><th>Verdetto</th></tr></thead><tbody>
-        ${autonome.map(f => html`<tr key=${f.id}><td className="n">${conFase(f.inviato_at)}</td><td>${who.teamName(f.from_team)}<br/><span className="hint">${who.name(f.inviato_by || f.opened_by)}</span></td>
+        ${autonome.map(f => html`<tr key=${f.id}><td className="n">${conFase(f.inviato_at)}</td><td>${who.teamName(f.from_team)}<br/><span className="hint">${f.inviato_nome || f.opened_nome || who.name(f.inviato_by || f.opened_by)}</span></td>
           <td><button className="link" onClick=${() => goFlow(f.id)}>${f.titolo}</button></td><td>${destText(f)}</td>
           <td>${f.diretta ? html`<span className="tag warn">senza autorizzazione</span>` : 'firmata in proprio'}</td>
           <td className="n">${f.informata_at ? ora(f.informata_at) + ' (dopo ' + durata(f.inviato_at, f.informata_at) + ')' : html`<span className="miss">non informata</span>`}</td>
@@ -2313,7 +2393,7 @@ function Debriefing({ d, cfg, who, goFlow, ops }) {
       <div className="cols">${who.ids.map(t => html`<div key=${t} className="col" style=${{ '--c': who.teamColor(t) }}><h3>${who.teamName(t)}</h3>
         <ol className="reg" style=${{ marginTop: '0' }}>${d.registro.filter(r => r.team_id === t).sort(byTime).map(r => html`<li key=${r.id} style=${{ gridTemplateColumns: '70px 1fr' }}>
           <div><time>${ora(r.created_at)}</time><span className="sim">${r.tempo_sim || ''}</span></div>
-          <div><div className="x">${r.testo}</div><div className="by">${who.name(r.author)}${r.ruolo ? ', ' + r.ruolo : ''}</div></div></li>`)}</ol>
+          <div><div className="x">${r.testo}</div><div className="by">${r.autore_nome || who.name(r.author)}${r.ruolo ? ', ' + r.ruolo : ''}</div></div></li>`)}</ol>
         ${!d.registro.some(r => r.team_id === t) ? html`<p className="empty">Registro vuoto.</p>` : null}
       </div>`)}</div>
     </div>
@@ -2340,7 +2420,7 @@ function Debriefing({ d, cfg, who, goFlow, ops }) {
 
     <div className="section"><h3>Partecipazione</h3>
       <div className="tbl-wrap"><table><thead><tr><th>Persona</th><th>Squadra</th><th>Ruolo</th><th>Aperte</th><th>Decisioni</th><th>Tempo medio di decisione</th><th>Invii</th><th>Messaggi</th><th>Registro</th></tr></thead><tbody>
-        ${persone.map(p => html`<tr key=${p.m.user_id}><td>${p.m.nome}</td><td>${who.teamName(p.m.team_id)}</td><td>${p.m.ruolo}</td><td>${p.aperte}</td><td>${p.decisioni}</td><td>${p.risposta}</td><td>${p.invii}</td><td>${p.messaggi}</td><td>${p.registro}</td></tr>`)}
+        ${persone.map(p => html`<tr key=${p.chiave}><td>${p.nome}${p.account ? html`<br/><span className="hint">dal PC di ${p.account}</span>` : null}</td><td>${who.teamName(p.team)}</td><td>${p.ruolo}</td><td>${p.aperte}</td><td>${p.decisioni}</td><td>${p.risposta}</td><td>${p.invii}</td><td>${p.messaggi}</td><td>${p.registro}</td></tr>`)}
       </tbody></table></div>
     </div>
 
@@ -2511,7 +2591,7 @@ function ReportView({ d, cfg, who, onClose }) {
 
       <h2>Chi ha partecipato</h2>
       <table><thead><tr>${who.teams.map(t => html`<th key=${t.id}>${t.nome}</th>`)}</tr></thead><tbody><tr>
-        ${who.teams.map(t => html`<td key=${t.id}>${d.members.filter(m => m.team_id === t.id).sort((a, b) => a.nome.localeCompare(b.nome)).map(m => html`<div key=${m.user_id}>${m.nome}${m.ruolo ? html` <span className="hint">— ${m.ruolo}</span>` : null}</div>`)}</td>`)}
+        ${who.teams.map(t => html`<td key=${t.id}>${partecipazione(d, who).filter(p => p.team === t.id).map(p => html`<div key=${p.chiave}>${p.nome}${p.ruolo ? html` <span className="hint">— ${p.ruolo}</span>` : null}</div>`)}</td>`)}
       </tr></tbody></table>
 
       ${tappe.length ? html`<h2>Tempi del piano incidenti</h2>
@@ -2630,6 +2710,7 @@ function Partecipanti({ d, cfg, who, ops }) {
         </span>
       </div>`)}
       ${!d.members.some(m => m.team_id === t) ? html`<p className="empty">Nessuno ancora.</p>` : null}
+      <${PersoneInSala} t=${t} d=${d} cfg=${cfg} ops=${ops}/>
     </div>`)}</div>
     <div className="section"><h3>Osservatori</h3>
       <p className="hint">Vedono tutte le stanze in sola lettura e scrivono note che arrivano qui in Conduzione e nel Debriefing.
@@ -2638,6 +2719,36 @@ function Partecipanti({ d, cfg, who, ops }) {
         <b>${o.nome}</b>
         <button className="btn plain small" onClick=${() => { if (window.confirm('Togliere ' + o.nome + ' dagli osservatori? Potrà rientrare con il codice.')) ops.run(sb.from('osservatori').delete().eq('user_id', o.user_id), ['osservatori'], 'Tolto'); }}>Togli</button>
       </div>`)}</div>` : html`<p className="empty">Nessun osservatore.</p>`}
+    </div>
+  </div>`;
+}
+
+/* Le persone in sala di una squadra, quelle che si scelgono in «Chi agisce» sui PC condivisi. */
+function PersoneInSala({ t, d, cfg, ops }) {
+  const [nome, setNome] = useState('');
+  const [ruolo, setRuolo] = useState('');
+  const persone = d.persone.filter(p => p.team_id === t).sort((a, b) => a.nome.localeCompare(b.nome));
+  const pc = p => d.members.filter(m => m.persona_id === p.id).map(m => m.nome).join(', ');
+  const aggiungi = async () => {
+    const r = await ops.run(sb.from('persone').insert({ team_id: t, nome: nome.trim(), ruolo }), ['persone'], 'Aggiunta');
+    if (!r.error) { setNome(''); setRuolo(''); }
+  };
+  return html`<div style=${{ marginTop: '12px' }}>
+    <h4 style=${{ margin: '0 0 2px' }}>Persone in sala</h4>
+    <p className="hint" style=${{ marginTop: 0 }}>Chi agisce dai PC condivisi. Le squadre le aggiungono anche da sé.</p>
+    ${persone.map(p => html`<div key=${p.id} className="person">
+      <b>${p.nome}${pc(p) ? html`<br/><span className="hint">agisce dal PC di ${pc(p)}</span>` : null}</b>
+      <select value=${p.ruolo} aria-label=${'Ruolo di ' + p.nome} onChange=${e => ops.run(sb.from('persone').update({ ruolo: e.target.value }).eq('id', p.id), ['persone'], 'Ruolo aggiornato')}>
+        <option value="">Nessun ruolo</option>${Array.from(new Set((cfg.ruoli[t] || []).concat(p.ruolo ? [p.ruolo] : []))).map(r => html`<option key=${r}>${r}</option>`)}
+      </select>
+      <button className="btn plain small" onClick=${() => { if (window.confirm('Togliere ' + p.nome + '? Le firme già date restano.')) ops.run(sb.from('persone').delete().eq('id', p.id), ['persone', 'members'], 'Tolta'); }}>Togli</button>
+    </div>`)}
+    <div className="person">
+      <input type="text" placeholder="Nome" aria-label="Nome della persona in sala" value=${nome} onChange=${e => setNome(e.target.value)}/>
+      <select value=${ruolo} aria-label="Ruolo della persona in sala" onChange=${e => setRuolo(e.target.value)}>
+        <option value="">Nessun ruolo</option>${(cfg.ruoli[t] || []).map(r => html`<option key=${r}>${r}</option>`)}
+      </select>
+      <button className="btn small" disabled=${!nome.trim()} onClick=${aggiungi}>Aggiungi</button>
     </div>
   </div>`;
 }
@@ -2851,7 +2962,7 @@ function MemberHome({ user, onLogout }) {
   const m = d.members.find(x => x.user_id === user.id);
   if (!m) return html`<div className="gate"><div className="gate-box doc"><p>Non fai più parte della simulazione. Chiedi al facilitatore il codice per rientrare.</p>
     <div className="actions"><button className="btn" onClick=${() => location.reload()}>Riprova</button><button className="btn plain" onClick=${onLogout}>Esci</button></div></div></div>`;
-  return html`<${Room} d=${d} ops=${ops} me=${{ id: user.id, team: m.team_id, ruolo: m.ruolo, nome: m.nome }} onLogout=${onLogout}/>`;
+  return html`<${Room} d=${d} ops=${ops} me=${{ id: user.id, team: m.team_id, ruolo: m.ruolo, nome: m.nome, persona_id: m.persona_id }} onLogout=${onLogout}/>`;
 }
 
 /* Osservatore: tutte le stanze in sola lettura e le note di osservazione, che arrivano alla regia. */
