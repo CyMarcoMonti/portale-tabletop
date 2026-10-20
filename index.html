@@ -371,6 +371,32 @@ td.n{white-space:nowrap}
 .report .num div{border:1px solid var(--line);border-top:4px solid var(--acc);border-radius:4px;padding:10px 12px}
 .report .num b{display:block;font-size:28px;font-stretch:75%;line-height:1.05}
 .report .num span{font-size:12px;color:var(--muted)}
+/* revisione in plenaria */
+.replay{position:fixed;inset:0;z-index:50;background:#0B1017;color:#E8EDF3;display:grid;grid-template-rows:auto auto 1fr auto;overflow:hidden}
+.rp-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:22px 34px 14px;border-bottom:1px solid #243041}
+.rp-t{font-stretch:62%;font-weight:800;font-size:clamp(30px,3.6vw,52px);line-height:.95}
+.rp-sub{color:#8FA0B3;font-size:14px;margin-top:6px}
+.rp-clock{text-align:right}
+.rp-clock .f{font-stretch:70%;font-weight:700;font-size:clamp(16px,1.6vw,24px);color:#C9D4E0}
+.rp-clock .t{font-stretch:62%;font-weight:800;font-size:clamp(34px,4.4vw,64px);line-height:.95;color:#F0B44C}
+.rp-bar{display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap;padding:10px 34px;background:#111823;border-bottom:1px solid #243041;font-size:14px}
+.rp-bar label{display:flex;gap:6px;align-items:center;color:#C9D4E0}
+.rp-bar input[type=range]{width:min(320px,40vw);accent-color:#F0B44C}
+.rp-bar .btn-light:disabled{opacity:.4}
+.rp-n{font-weight:700;color:#C9D4E0;min-width:70px}
+.rp-grid{display:grid;gap:18px;padding:18px 34px;overflow:auto;min-height:0;align-items:start}
+.rp-lane h3{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#C9D4E0;border-bottom:4px solid var(--c);padding-bottom:6px;margin-bottom:10px}
+.rp-ev{background:#151D27;border-left:4px solid var(--c);border-radius:0 6px 6px 0;padding:8px 12px;margin-bottom:8px;opacity:.45;transition:opacity .3s}
+.rp-ev .h{display:flex;justify-content:space-between;font-size:12px;color:#8FA0B3;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.rp-ev .x{font-size:15px;line-height:1.4;margin-top:3px}
+.rp-ev.cur{opacity:1;background:#1E2A38;box-shadow:0 0 0 2px #F0B44C;animation:mediaIn .5s ease-out}
+.rp-ev.cur .x{font-size:clamp(17px,1.6vw,24px);font-weight:700}
+.rp-ev .det{margin-top:8px;font-size:clamp(14px,1.2vw,18px);line-height:1.5;color:#C9D4E0;white-space:pre-wrap;max-height:30vh;overflow:auto}
+.rp-ev.k-decisione .tp,.rp-ev.k-invio .tp{color:#7FD49A}
+.rp-ev.warn .tp{color:#F0B44C}
+.rp-ev.k-media .tp{color:#E5534B}
+.rp-ev.k-nota{font-style:italic}
+.rp-help{padding:6px 34px 10px;color:#5E6E80;font-size:12.5px}
 @media print{
   body.printing #root{display:none!important}
   body.printing .report-bg{position:static;padding:0;background:#fff;overflow:visible}
@@ -592,13 +618,16 @@ function faseAt(fasi, ts) {
 
 /* ---------- dati condivisi + tempo reale ---------- */
 const T_ALL = ['campaign', 'campaign_fasi', 'teams', 'members', 'flows', 'messages', 'registro', 'monitor'];
-const T_MASTER = ['settings', 'team_codes', 'copione', 'valutazioni', 'fiducia', 'flow_events', 'previste', 'attori', 'punti', 'tappe', 'bivi', 'cronologia', 'deleghe', 'osservazioni'];
+const T_MASTER = ['settings', 'team_codes', 'copione', 'valutazioni', 'fiducia', 'flow_events', 'previste', 'attori', 'punti', 'tappe', 'bivi', 'cronologia', 'deleghe', 'osservazioni', 'osservatori'];
 const SINGLE = { campaign: 1, settings: 1 };
+// cosa carica ciascuno: la regia tutto, le squadre il necessario, gli osservatori anche note e punti dei piani
+const TABELLE = { master: T_ALL.concat(T_MASTER), member: T_ALL, observer: T_ALL.concat(['osservazioni', 'punti']) };
 
-function useData(isMaster) {
+function useData(mode) {
+  const isMaster = mode === 'master';
   const [d, setD] = useState({ loaded: false, campaign: null, settings: null, team_codes: [], campaign_fasi: [], teams: [], members: [],
     flows: [], messages: [], registro: [], monitor: [], copione: [], valutazioni: [], fiducia: [], flow_events: [],
-    previste: [], attori: [], punti: [], tappe: [], bivi: [], cronologia: [], deleghe: [], osservazioni: [] });
+    previste: [], attori: [], punti: [], tappe: [], bivi: [], cronologia: [], deleghe: [], osservazioni: [], osservatori: [] });
   const [err, setErr] = useState('');
   const load = useCallback(async t => {
     const { data, error } = await sb.from(t).select('*');
@@ -607,9 +636,9 @@ function useData(isMaster) {
     setD(p => ({ ...p, [t]: SINGLE[t] ? (data[0] || null) : data }));
   }, []);
   const loadAll = useCallback(async () => {
-    await Promise.all((isMaster ? T_ALL.concat(T_MASTER) : T_ALL).map(load));
+    await Promise.all(TABELLE[mode].map(load));
     setD(p => ({ ...p, loaded: true }));
-  }, [isMaster, load]);
+  }, [mode, load]);
   useEffect(() => {
     loadAll();
     const timers = {};
@@ -622,7 +651,7 @@ function useData(isMaster) {
       }, 200);
     };
     let ch = sb.channel('tt-' + Math.random().toString(36).slice(2));
-    ['flows', 'messages', 'members', 'campaign', 'registro', 'teams', 'monitor'].forEach(t => {
+    ['flows', 'messages', 'members', 'campaign', 'registro', 'teams', 'monitor'].concat(mode === 'member' ? [] : ['osservazioni']).forEach(t => {
       ch = ch.on('postgres_changes', { event: '*', schema: 'public', table: t }, () => later(t));
     });
     ch.subscribe();
@@ -753,6 +782,23 @@ function Login() {
   const [pw, setPw] = useState('');
   const [msg, setMsg] = useState('');
   const [busy, setBusy] = useState(false);
+  // password dimenticata: arriva un'email con un link che riporta qui per sceglierne una nuova
+  const recupera = async e => {
+    e.preventDefault(); setBusy(true); setMsg('');
+    const r = await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: location.origin + location.pathname });
+    setBusy(false);
+    setMsg(r.error ? loginErr(r.error) : 'Se l\'indirizzo è registrato, arriva un\'email con il link per scegliere una nuova password. Controlla anche lo spam.');
+  };
+  if (mode === 'reset') return html`<div className="gate"><div className="gate-box">
+    <div className="gate-title">Password<br/>dimenticata</div>
+    <p className="hint">Scrivi l'email con cui sei registrato: ti mandiamo un link per sceglierne una nuova.</p>
+    <form className="doc" onSubmit=${recupera}>
+      <${Field} label="Email"><input id="reset-email" type="email" autoComplete="email" required value=${email} onChange=${e => setEmail(e.target.value)}/><//>
+      ${msg ? html`<p className="hint" style=${{ marginTop: '10px' }} role="status">${msg}</p>` : null}
+      <div className="actions"><button id="reset-go" className="btn" disabled=${busy}>Mandami il link</button>
+        <button type="button" className="btn plain" onClick=${() => { setMode('in'); setMsg(''); }}>Torna all'accesso</button></div>
+    </form>
+  </div></div>`;
   const go = async e => {
     e.preventDefault(); setBusy(true); setMsg('');
     const r = mode === 'in'
@@ -774,9 +820,36 @@ function Login() {
       <${Field} label="Password" hint=${mode === 'up' ? 'Almeno 6 caratteri.' : null}>
         <input id="password" type="password" autoComplete=${mode === 'in' ? 'current-password' : 'new-password'} required value=${pw} onChange=${e => setPw(e.target.value)}/><//>
       ${msg ? html`<p className="hint" style=${{ color: 'var(--no)', marginTop: '10px' }} role="alert">${msg}</p>` : null}
-      <div className="actions"><button id="login-go" className="btn" disabled=${busy}>${mode === 'in' ? 'Accedi' : 'Crea account'}</button></div>
+      <div className="actions"><button id="login-go" className="btn" disabled=${busy}>${mode === 'in' ? 'Accedi' : 'Crea account'}</button>
+        ${mode === 'in' ? html`<button type="button" id="btn-reset" className="link" onClick=${() => { setMode('reset'); setMsg(''); }}>Password dimenticata?</button>` : null}</div>
     </form>
   </div></div>`;
+}
+
+/* Nuova password: dopo il link di recupero, oppure dall'interno quando si è già entrati. */
+function NuovaPassword({ onDone, onCancel, titolo }) {
+  const [a, setA] = useState('');
+  const [b, setB] = useState('');
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const ok = a.length >= 6 && a === b && !busy;
+  const salva = async e => {
+    e.preventDefault(); setBusy(true); setMsg('');
+    const r = await sb.auth.updateUser({ password: a });
+    setBusy(false);
+    if (r.error) { setMsg(loginErr(r.error)); return; }
+    onDone();
+  };
+  return html`<form onSubmit=${salva}>
+    <h2>${titolo || 'Nuova password'}</h2>
+    <p className="hint" style=${{ marginTop: '4px' }}>Almeno 6 caratteri. Vale da subito per i prossimi accessi.</p>
+    <${Field} label="Nuova password"><input id="np-a" type="password" autoComplete="new-password" value=${a} onChange=${e => setA(e.target.value)}/><//>
+    <${Field} label="Ripetila"><input id="np-b" type="password" autoComplete="new-password" value=${b} onChange=${e => setB(e.target.value)}/><//>
+    ${b && a !== b ? html`<p className="hint" style=${{ color: 'var(--no)', marginTop: '6px' }}>Le due password non coincidono.</p>` : null}
+    ${msg ? html`<p className="hint" style=${{ color: 'var(--no)', marginTop: '6px' }} role="alert">${msg}</p>` : null}
+    <div className="actions"><button id="np-go" className="btn" disabled=${!ok}>Salva la password</button>
+      ${onCancel ? html`<button type="button" className="btn plain" onClick=${onCancel}>Annulla</button>` : null}</div>
+  </form>`;
 }
 function Join({ onDone, onLogout }) {
   const [code, setCode] = useState('');
@@ -785,14 +858,16 @@ function Join({ onDone, onLogout }) {
   const [busy, setBusy] = useState(false);
   const go = async e => {
     e.preventDefault(); setBusy(true); setMsg('');
-    const { error } = await sb.rpc('join_session', { p_code: code, p_nome: nome });
+    let { error } = await sb.rpc('join_session', { p_code: code, p_nome: nome });
+    // non è il codice di una squadra: forse è quello degli osservatori
+    if (error && /Codice non valido/i.test(error.message || '')) ({ error } = await sb.rpc('join_observer', { p_code: code, p_nome: nome }));
     setBusy(false);
     if (error) { setMsg(errMsg(error)); return; }
     onDone();
   };
   return html`<div className="gate"><div className="gate-box">
     <div className="gate-title">Entra nella<br/>tua squadra</div>
-    <p className="hint">Il codice te lo dà il facilitatore: decide in quale stanza lavori.</p>
+    <p className="hint">Il codice te lo dà il facilitatore: decide in quale stanza lavori, oppure se osservi.</p>
     <form className="doc" onSubmit=${go}>
       <${Field} label="Codice della squadra"><input id="join-code" type="text" required autoComplete="off" value=${code} onChange=${e => setCode(e.target.value)}/><//>
       <${Field} label="Il tuo nome" hint="Comparirà su ogni messaggio e decisione."><input id="join-name" type="text" required value=${nome} onChange=${e => setNome(e.target.value)}/><//>
@@ -1501,7 +1576,10 @@ function Profile({ me, ruoli, ops, onClose }) {
   const [sel, setSelR] = useState(me.ruolo ? (known ? me.ruolo : '__altro') : '');
   const [free, setFree] = useState(known ? '' : (me.ruolo || ''));
   const [suono, setSuono] = useState(lsGet('suono', true));
+  const [pwd, setPwd] = useState(false);
   const ruolo = sel === '__altro' ? free.trim() : sel;
+  if (pwd) return html`<${Modal} onClose=${onClose}><${NuovaPassword} titolo="Cambia password" onCancel=${() => setPwd(false)}
+    onDone=${() => { setPwd(false); ops.say('Password cambiata'); }}/><//>`;
   const save = async () => {
     lsSet('suono', suono);
     const r = await ops.run(sb.rpc('set_ruolo', { p_ruolo: ruolo }), ['members'], 'Profilo aggiornato');
@@ -1517,7 +1595,8 @@ function Profile({ me, ruoli, ops, onClose }) {
     <//>
     <label className="field" style=${{ display: 'flex', gap: '8px', alignItems: 'center' }}>
       <input type="checkbox" checked=${suono} onChange=${e => setSuono(e.target.checked)}/> Suono quando arriva qualcosa di nuovo</label>
-    <div className="actions"><button id="ruolo-save" className="btn" onClick=${save}>Salva</button><button className="btn plain" onClick=${onClose}>Annulla</button></div>
+    <div className="actions"><button id="ruolo-save" className="btn" onClick=${save}>Salva</button><button className="btn plain" onClick=${onClose}>Annulla</button>
+      <span style=${{ flex: 1 }}></span><button className="link" onClick=${() => setPwd(true)}>Cambia password</button></div>
   <//>`;
 }
 
@@ -1562,13 +1641,14 @@ function FiduciaChart({ serie, fasi }) {
 }
 
 function Regia({ user, onLogout }) {
-  const { d, load, err } = useData(true);
+  const { d, load, err } = useData('master');
   const ops = useOps(load);
   const [tab, setTab] = useState(() => lsGet('rtab', 'conduzione'));
   const [sel, setSel] = useState(null);
   const [filtro, setFiltro] = useState('gestire');
   const [prevTeam, setPrevTeam] = useState('A');
   const [vista, setVista] = useState(null);   // null = regia; id squadra = vista partecipanti a tutto schermo
+  const [pwd, setPwd] = useState(false);
   useEffect(() => { lsSet('rtab', tab); }, [tab]);
   if (!d.loaded) return html`<${Loading}/>`;
   const cfg = normCfg(d.campaign && d.campaign.config);
@@ -1627,16 +1707,20 @@ function Regia({ user, onLogout }) {
       ${pt ? html`<${Room} key=${pt} d=${d} ops=${ops} me=${{ id: 'anteprima', team: pt, preview: true }}/>` : html`<p className="empty" style=${{ padding: '16px' }}>Nessuna squadra: aggiungine una da Impostazioni.</p>`}
     </div>`;
   else if (tab === 'partecipanti') body = html`<${Partecipanti} d=${d} cfg=${cfg} who=${who} ops=${ops}/>`;
-  else if (tab === 'impostazioni') body = html`<${Impostazioni} d=${d} cfg=${cfg} ops=${ops} load=${load}/>`;
+  // la chiave rimonta il modulo quando la configurazione cambia da fuori (per esempio caricando uno scenario)
+  else if (tab === 'impostazioni') body = html`<${Impostazioni} key=${JSON.stringify((d.campaign && d.campaign.config) || {}).length + ':' + cfg.titolo + ':' + d.teams.length} d=${d} cfg=${cfg} ops=${ops} load=${load}/>`;
 
   return html`<div className="app">
     <${Band} color=${colRegia} title="Regia" sub=${cfg.titolo} campaign=${d.campaign} logo=${cfg.logo}>
       <button id="btn-vista-partecipanti" className="btn-light" disabled=${!pt} onClick=${() => setVista(pt)}>Vista partecipanti<small>come la vede una squadra</small></button>
+      <button id="btn-password" className="btn-light" onClick=${() => setPwd(true)}>${user.email}<small>Cambia password</small></button>
       <button className="btn-light" onClick=${onLogout}>Esci</button>
     <//>
     ${err ? html`<div className="notice" role="alert">${err}</div>` : null}
     <${Tabs} tabs=${tabs} value=${tab} color=${colRegia} onChange=${t => { setTab(t); setSel(null); }}/>
     ${body}
+    ${pwd ? html`<${Modal} onClose=${() => setPwd(false)}><${NuovaPassword} titolo="Cambia password" onCancel=${() => setPwd(false)}
+      onDone=${() => { setPwd(false); ops.say('Password cambiata'); }}/><//>` : null}
     <${Toast} t=${ops.toast}/>
   </div>`;
 }
@@ -1920,17 +2004,19 @@ function Conduzione({ d, cfg, who, ops, gestire, goFlow }) {
 }
 
 /* Note rapide della regia: una frase, l'orario, se serve il punto dei piani e la stanza. Finiscono nel debriefing e nel report. */
-function NoteRapide({ d, who, ops, compact }) {
+// me: l'osservatore che scrive (toglie solo le sue note); senza me è la regia, che le gestisce tutte
+function NoteRapide({ d, who, ops, compact, me, defTeam, onSaved }) {
   const [t, setT] = useState('');
   const [punto, setPunto] = useState('');
-  const [team, setTeam] = useState('');
+  const [team, setTeam] = useState(defTeam || '');
   const punti = d.punti.slice().sort((a, b) => a.ordine - b.ordine);
   const nomePunto = id => { const p = d.punti.find(x => x.id === id); return p ? p.ordine + '. ' + p.punto : ''; };
+  const autore = o => { const x = d.osservatori.find(a => a.user_id === o.autore); return x ? x.nome : me && o.autore === me ? 'tu' : ''; };
   const add = async () => {
     if (!t.trim()) return;
     const r = await ops.run(sb.from('osservazioni').insert({ testo: t.trim(), punto_id: punto ? Number(punto) : null, team_id: team || null,
       fase: (d.campaign && d.campaign.fase) || '', tempo_sim: (d.campaign && d.campaign.tempo_sim) || '' }), ['osservazioni'], 'Nota salvata');
-    if (!r.error) setT('');
+    if (!r.error) { setT(''); if (onSaved) onSaved(); }
   };
   const list = d.osservazioni.slice().sort((a, b) => byTime(b, a));
   return html`<div>
@@ -1944,8 +2030,8 @@ function NoteRapide({ d, who, ops, compact }) {
     </div>
     <div className="actions"><button id="oss-add" className="btn small" disabled=${!t.trim()} onClick=${add}>Salva la nota</button></div>
     ${(compact ? list.slice(0, 4) : list).map(o => html`<div key=${o.id} className="oss"><time>${ora(o.created_at)}</time>${o.testo}
-      <div className="hint">${[o.team_id ? who.teamName(o.team_id) : '', nomePunto(o.punto_id), faseBreve(o.fase)].filter(Boolean).join(' · ')}
-        ${!compact ? html` · <button className="link" onClick=${() => { if (window.confirm('Togliere questa nota?')) ops.run(sb.from('osservazioni').delete().eq('id', o.id), ['osservazioni']); }}>togli</button>` : null}</div></div>`)}
+      <div className="hint">${[autore(o), o.team_id ? who.teamName(o.team_id) : '', nomePunto(o.punto_id), faseBreve(o.fase)].filter(Boolean).join(' · ')}
+        ${!compact && (!me || o.autore === me) ? html` · <button className="link" onClick=${() => { if (window.confirm('Togliere questa nota?')) ops.run(sb.from('osservazioni').delete().eq('id', o.id), ['osservazioni']); }}>togli</button>` : null}</div></div>`)}
     ${compact && list.length > 4 ? html`<p className="hint" style=${{ marginTop: '6px' }}>Tutte le ${list.length} note sono nel Debriefing.</p>` : null}
   </div>`;
 }
@@ -2159,6 +2245,7 @@ function exportSessione(d) {
 function Debriefing({ d, cfg, who, goFlow, ops }) {
   const [vedi, setVedi] = useState('tutto');
   const [report, setReport] = useState(false);
+  const [replay, setReplay] = useState(false);
   const rows = cronologia(d, who);
   const serie = fiduciaSerie(d.fiducia);
   const media = mediaVal;
@@ -2194,6 +2281,7 @@ function Debriefing({ d, cfg, who, goFlow, ops }) {
     <h2>Debriefing</h2>
     <div className="actions">
       <button id="btn-report" className="btn" onClick=${() => setReport(true)}><${Icon} n="report"/> Report per il cliente</button>
+      <button id="btn-replay" className="btn plain" onClick=${() => setReplay(true)}><${Icon} n="play"/> Rivedi la sessione in plenaria</button>
       <button className="btn plain small" onClick=${exportCrono}>Scarica la cronologia (CSV)</button>
       <button className="btn plain small" onClick=${exportVal}>Scarica le valutazioni (CSV)</button>
       <button className="btn plain small" onClick=${exportJson}>Scarica tutto (JSON)</button>
@@ -2282,32 +2370,105 @@ function Debriefing({ d, cfg, who, goFlow, ops }) {
       </tbody></table></div>
     </div>
     ${report ? html`<${ReportView} d=${d} cfg=${cfg} who=${who} onClose=${() => setReport(false)}/>` : null}
+    ${replay ? html`<${Replay} d=${d} cfg=${cfg} who=${who} onClose=${() => setReplay(false)}/>` : null}
   </div>`;
 }
 
 /* Report finale per il cliente: si stampa o si salva in PDF dal browser, oppure si scarica per Word. */
 const REPORT_CSS_WORD = 'body{font-family:Arial,sans-serif;font-size:11pt;color:#152030}h1{font-size:24pt}h2{font-size:15pt;border-bottom:2px solid #152030;margin-top:18pt}'
   + 'table{border-collapse:collapse;width:100%}th,td{border:1px solid #C8D0DA;padding:4px 6px;vertical-align:top;font-size:9.5pt;text-align:left}th{background:#EEF1F4}.hint{color:#5A6576}';
-function reportEventi(d, who) {
+// eventi della sessione per corsia (scenario o squadra), con il tipo: servono al report e alla revisione in plenaria
+function reportEventi(d, who, opz) {
+  opz = opz || {};
   const ev = [];
-  const add = (t, lane, testo) => { if (t) ev.push({ t, lane, testo }); };
-  d.campaign_fasi.forEach(s => add(s.created_at, 'scenario', 'Inizia ' + s.fase + (s.tempo_sim ? ' (' + s.tempo_sim + ')' : '')));
-  d.tappe.forEach(t => add(t.at, 'scenario', 'Tappa: ' + t.nome));
+  const add = (t, lane, testo, k, extra) => { if (t) ev.push({ t, lane, testo, k, ...extra }); };
+  d.campaign_fasi.forEach(s => add(s.created_at, 'scenario', 'Inizia ' + s.fase + (s.tempo_sim ? ' (' + s.tempo_sim + ')' : ''), 'fase'));
+  d.tappe.forEach(t => add(t.at, 'scenario', 'Tappa: ' + t.nome, 'tappa'));
   d.flows.forEach(f => {
-    if (f.kind === 'situazione' && !f.richiesta) { add(f.created_at, 'scenario', f.voce + ' → ' + who.teamName(f.to_team) + ': ' + f.titolo); return; }
-    if (f.kind === 'situazione') { add(f.created_at, f.to_team, 'Scrive a ' + f.voce + ': ' + f.titolo); return; }
+    if (f.kind === 'situazione' && !f.richiesta) { add(f.created_at, 'scenario', f.voce + ' → ' + who.teamName(f.to_team) + ': ' + f.titolo, 'situazione', { voce: f.voce, titolo: f.titolo, dettaglio: f.motivo }); return; }
+    if (f.kind === 'situazione') { add(f.created_at, f.to_team, 'Scrive a ' + f.voce + ': ' + f.titolo, 'richiesta', { titolo: f.titolo, dettaglio: f.motivo }); return; }
     if (f.kind === 'canale') {
-      add(f.created_at, f.from_team, (f.tipo === 'Informativa' ? 'Informativa a ' : 'Richiesta a ') + who.teamName(f.to_team) + ': ' + f.titolo);
-      if (f.decided_at && f.tipo !== 'Informativa') add(f.decided_at, f.to_team, (f.stato === 'respinto' ? 'Respinge: ' : 'Approva: ') + f.titolo);
+      add(f.created_at, f.from_team, (f.tipo === 'Informativa' ? 'Informativa a ' : 'Richiesta a ') + who.teamName(f.to_team) + ': ' + f.titolo, f.tipo === 'Informativa' ? 'informativa' : 'richiesta', { titolo: f.titolo, dettaglio: f.motivo });
+      if (f.decided_at && f.tipo !== 'Informativa') add(f.decided_at, f.to_team, (f.stato === 'respinto' ? 'Respinge: ' : 'Approva: ') + f.titolo, 'decisione', { titolo: f.titolo, dettaglio: f.nota_decisione });
       return;
     }
-    if (!f.diretta) add(f.created_at, f.from_team, 'Prepara «' + f.titolo + '» per ' + destText(f));
-    if (f.decided_at && !f.diretta) add(f.decided_at, f.to_team || f.from_team, (f.stato === 'respinto' ? 'Non autorizza: ' : 'Autorizza: ') + f.titolo);
-    if (f.inviato_at) add(f.inviato_at, f.from_team, (f.diretta ? 'Invia senza autorizzazione «' : 'Invia «') + f.titolo + '» a ' + destText(f));
-    if (f.informata_at) add(f.informata_at, f.from_team, 'Informa ' + who.teamName(f.to_team) + ' dell\'invio «' + f.titolo + '»');
+    if (!f.diretta) add(f.created_at, f.from_team, 'Prepara «' + f.titolo + '» per ' + destText(f), 'prepara', { titolo: f.titolo, dettaglio: f.motivo });
+    if (f.decided_at && !f.diretta) add(f.decided_at, f.to_team || f.from_team, (f.stato === 'respinto' ? 'Non autorizza: ' : 'Autorizza: ') + f.titolo, 'decisione', { titolo: f.titolo, dettaglio: f.nota_decisione });
+    if (f.inviato_at) add(f.inviato_at, f.from_team, (f.diretta ? 'Invia senza autorizzazione «' : 'Invia «') + f.titolo + '» a ' + destText(f), 'invio', { titolo: f.titolo, dettaglio: f.motivo, warn: !!f.diretta });
+    if (f.informata_at) add(f.informata_at, f.from_team, 'Informa ' + who.teamName(f.to_team) + ' dell\'invio «' + f.titolo + '»', 'informativa');
   });
-  d.registro.forEach(r => add(r.created_at, r.team_id, (who.team(r.team_id) || {}).autorizza ? 'Log: ' + r.testo : 'Registro: ' + r.testo));
+  d.registro.forEach(r => add(r.created_at, r.team_id, ((who.team(r.team_id) || {}).autorizza ? 'Log: ' : 'Registro: ') + r.testo, 'registro'));
+  if (opz.media) d.monitor.forEach(m => add(m.created_at, 'scenario', m.fonte + ': ' + m.testo, 'media', { canale: m.canale }));
+  if (opz.note) d.osservazioni.forEach(o => add(o.created_at, o.team_id || 'scenario', 'Osservato: ' + o.testo, 'nota'));
   return ev.sort((a, b) => ms(a.t) - ms(b.t));
+}
+
+/* Revisione in plenaria: la sessione rivista un evento alla volta, con le corsie delle stanze affiancate. */
+const CHIAVE = ['fase', 'tappa', 'situazione', 'decisione', 'invio', 'informativa'];
+const TIPO_EV = { fase: 'Fase', tappa: 'Tappa', situazione: 'Situazione', richiesta: 'Richiesta', informativa: 'Informativa', decisione: 'Decisione',
+  prepara: 'Prepara', invio: 'Invio', registro: 'Registro', media: 'Media', nota: 'Osservazione' };
+function Replay({ d, cfg, who, onClose }) {
+  const [soloChiave, setSoloChiave] = useState(false);
+  const [media, setMedia] = useState(true);
+  const [note, setNote] = useState(false);
+  const [i, setI] = useState(0);
+  const [play, setPlay] = useState(false);
+  const tutti = reportEventi(d, who, { media, note });
+  const ev = soloChiave ? tutti.filter(e => CHIAVE.includes(e.k)) : tutti;
+  const n = ev.length;
+  const cur = ev[Math.min(i, n - 1)];
+  const vai = j => setI(Math.max(0, Math.min(n - 1, j)));
+  useEffect(() => { if (i > n - 1) setI(Math.max(0, n - 1)); }, [n]);
+  useEffect(() => {
+    if (!play) return;
+    const t = setInterval(() => setI(x => { if (x >= n - 1) { setPlay(false); return x; } return x + 1; }), 3500);
+    return () => clearInterval(t);
+  }, [play, n]);
+  useEffect(() => {
+    const k = e => {
+      if (e.key === 'Escape') onClose();
+      else if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') { e.preventDefault(); setI(x => Math.min(n - 1, x + 1)); }
+      else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); setI(x => Math.max(0, x - 1)); }
+      else if (e.key === 'Home') setI(0);
+      else if (e.key === 'End') setI(n - 1);
+    };
+    document.addEventListener('keydown', k); return () => document.removeEventListener('keydown', k);
+  }, [n]);
+  const lanes = [['scenario', 'Scenario e media', '#7D8FA3']].concat(who.teams.map(t => [t.id, t.nome, t.colore]));
+  const storico = d.campaign_fasi.slice().sort(byTime);
+  const tempoA = ts => { let s = ''; storico.forEach(x => { if (ms(x.created_at) <= ms(ts)) s = x.tempo_sim || s; }); return s; };
+  const visti = ev.slice(0, i + 1);
+  return ReactDOM.createPortal(html`<div className="replay" role="dialog" aria-label="Revisione della sessione">
+    <header className="rp-head">
+      <div><div className="rp-t">Rivediamo la sessione</div><div className="rp-sub">${cfg.titolo}</div></div>
+      ${cur ? html`<div className="rp-clock"><div className="f">${faseAt(d.campaign_fasi, cur.t) || 'Prima dell\'avvio'}${tempoA(cur.t) ? ' · ' + tempoA(cur.t) : ''}</div><div className="t">${ora(cur.t)}</div></div>` : null}
+    </header>
+    <div className="rp-bar">
+      <button className="btn-light" disabled=${i <= 0} onClick=${() => vai(i - 1)}>← Indietro</button>
+      <button id="rp-play" className="btn-light" aria-pressed=${play} onClick=${() => setPlay(!play)}>${play ? 'Pausa' : 'Riproduci'}</button>
+      <button id="rp-next" className="btn-light" disabled=${i >= n - 1} onClick=${() => vai(i + 1)}>Avanti →</button>
+      <input type="range" min="0" max=${Math.max(0, n - 1)} value=${Math.min(i, Math.max(0, n - 1))} aria-label="Posizione nella sessione" onChange=${e => vai(Number(e.target.value))}/>
+      <span className="rp-n">${n ? Math.min(i, n - 1) + 1 : 0} / ${n}</span>
+      <label><input type="checkbox" checked=${soloChiave} onChange=${e => { setSoloChiave(e.target.checked); setI(0); }}/> Solo i momenti chiave</label>
+      <label><input type="checkbox" checked=${media} onChange=${e => setMedia(e.target.checked)}/> Media</label>
+      <label><input type="checkbox" checked=${note} onChange=${e => setNote(e.target.checked)}/> Note di regia</label>
+      <span style=${{ flex: 1 }}></span>
+      <button className="btn-light" onClick=${onClose}>Chiudi · Esc</button>
+    </div>
+    ${n ? html`<div className="rp-grid" style=${{ gridTemplateColumns: 'repeat(' + lanes.length + ', minmax(0, 1fr))' }}>
+      ${lanes.map(([k, nome, col]) => { const qui = visti.filter(e => e.lane === k).slice(-5);
+        return html`<section key=${k} className="rp-lane" style=${{ '--c': col }}>
+          <h3>${nome}</h3>
+          ${qui.map(e => { const attuale = e === cur;
+            return html`<div key=${ms(e.t) + e.testo} className=${'rp-ev k-' + e.k + (attuale ? ' cur' : '') + (e.warn ? ' warn' : '')}>
+              <div className="h"><span className="tp">${TIPO_EV[e.k] || ''}</span><time>${ora(e.t)}</time></div>
+              <div className="x">${e.testo}</div>
+              ${attuale && e.dettaglio ? html`<div className="det">${e.dettaglio}</div>` : null}
+            </div>`; })}
+        </section>`; })}
+    </div>` : html`<p style=${{ padding: '30px 36px', color: '#8FA0B3' }}>Nessun evento da rivedere.</p>`}
+    <p className="rp-help">Frecce o barra spaziatrice per scorrere · Esc per uscire</p>
+  </div>`, document.body);
 }
 function ReportView({ d, cfg, who, onClose }) {
   const acc = cfg.colore || '#152030';
@@ -2488,6 +2649,74 @@ function Partecipanti({ d, cfg, who, ops }) {
       </div>`)}
       ${!d.members.some(m => m.team_id === t) ? html`<p className="empty">Nessuno ancora.</p>` : null}
     </div>`)}</div>
+    <div className="section"><h3>Osservatori</h3>
+      <p className="hint">Vedono tutte le stanze in sola lettura e scrivono note che arrivano qui in Conduzione e nel Debriefing.
+        Codice: ${d.settings && d.settings.codice_osservatori ? html`<b>${d.settings.codice_osservatori}</b>` : html`<span className="miss">nessuno, impostalo in Impostazioni</span>`}</p>
+      ${d.osservatori.length ? html`<div style=${{ maxWidth: '520px' }}>${d.osservatori.slice().sort((a, b) => a.nome.localeCompare(b.nome)).map(o => html`<div key=${o.user_id} className="person" style=${{ gridTemplateColumns: '1fr auto' }}>
+        <b>${o.nome}</b>
+        <button className="btn plain small" onClick=${() => { if (window.confirm('Togliere ' + o.nome + ' dagli osservatori? Potrà rientrare con il codice.')) ops.run(sb.from('osservatori').delete().eq('user_id', o.user_id), ['osservatori'], 'Tolto'); }}>Togli</button>
+      </div>`)}</div>` : html`<p className="empty">Nessun osservatore.</p>`}
+    </div>
+  </div>`;
+}
+
+/* ---------- scenario come pacchetto: tutto ciò che serve per rigiocarlo, senza i dati di una sessione ---------- */
+// tabella, campi da togliere, campi da riportare al valore iniziale; l'ordine è quello di inserimento
+const PACCHETTO = [
+  ['bivi', [], { scelta: null }],
+  ['tappe', [], { at: null }],
+  ['punti', ['id'], { accaduto: '', proposta: '' }],
+  ['previste', ['id'], {}],
+  ['attori', [], {}],
+  ['cronologia', ['id'], {}],
+  ['deleghe', ['id'], {}],
+  ['copione', ['id', 'created_at', 'inviato_flow', 'inviato_at', 'saltato_at'], {}],
+];
+// per svuotare una tabella serve un filtro che prenda tutte le righe
+const TUTTE = { bivi: q => q.gte('numero', -1000000), tappe: q => q.not('chiave', 'is', null), attori: q => q.not('nome', 'is', null) };
+function pacchettoScenario(d) {
+  const cfg = (d.campaign && d.campaign.config) || {};
+  const pulisci = (rows, via, azzera) => rows.map(r => { const x = { ...r, ...azzera }; via.forEach(k => { delete x[k]; }); return x; });
+  return { formato: 'portale-tabletop-scenario', versione: 1, esportato: new Date().toISOString(), titolo: cfg.titolo || '', config: cfg,
+    teams: d.teams.map(t => ({ id: t.id, nome: t.nome, colore: t.colore, autorizza: !!t.autorizza, ordine: t.ordine || 0 })),
+    tabelle: Object.fromEntries(PACCHETTO.map(([t, via, az]) => [t, pulisci(d[t] || [], via, az)])) };
+}
+const nomeFile = s => (s || 'scenario').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function ScenarioPacchetto({ d, ops, load }) {
+  const [busy, setBusy] = useState(false);
+  const scarica = () => { const p = pacchettoScenario(d); download('scenario-' + nomeFile(p.titolo) + '.json', JSON.stringify(p, null, 2), 'application/json'); };
+  const carica = async e => {
+    const file = e.target.files && e.target.files[0]; e.target.value = '';
+    if (!file) return;
+    let p;
+    try { p = JSON.parse(await file.text()); } catch (er) { ops.say('Il file non è un JSON leggibile.', 'err'); return; }
+    if (!p || p.formato !== 'portale-tabletop-scenario' || !p.tabelle || !Array.isArray(p.teams)) { ops.say('Il file non è uno scenario esportato dal portale.', 'err'); return; }
+    if (d.flows.length || d.registro.length) { ops.say('Prima azzera la simulazione: la sessione in corso fa riferimento allo scenario attuale.', 'err'); return; }
+    const conta = PACCHETTO.map(([t]) => (p.tabelle[t] || []).length);
+    if (!window.confirm('Caricare «' + (p.titolo || file.name) + '»?\n\nSostituisce copione (' + conta[7] + ' voci), comunicazioni previste, attori, punti dei piani, tappe, bivi, cronologia e deleghe, e aggiorna squadre e configurazione. Prima scarico una copia dello scenario attuale.')) return;
+    scarica();
+    setBusy(true);
+    const passi = [
+      sb.from('teams').upsert(p.teams.map(t => ({ id: t.id, nome: t.nome, colore: t.colore, autorizza: !!t.autorizza, ordine: t.ordine || 0 }))),
+      sb.from('campaign').update({ config: p.config || {} }).eq('id', 1),
+    ];
+    // si svuota in ordine inverso (il copione prima dei bivi) e si riempie nell'ordine del pacchetto
+    PACCHETTO.slice().reverse().forEach(([t]) => passi.push((TUTTE[t] || (q => q.gte('id', 0)))(sb.from(t).delete())));
+    PACCHETTO.forEach(([t]) => { const rows = p.tabelle[t] || []; if (rows.length) passi.push(sb.from(t).insert(rows)); });
+    for (const q of passi) { const r = await ops.run(q); if (r.error) { setBusy(false); T_ALL.concat(T_MASTER).forEach(load); return; } }
+    setBusy(false);
+    T_ALL.concat(T_MASTER).forEach(load);
+    ops.say('Scenario caricato: «' + (p.titolo || file.name) + '»');
+  };
+  return html`<div className="section panel" style=${{ borderLeft: '5px solid var(--inviato)' }}>
+    <h3>Scenario come pacchetto</h3>
+    <p className="hint">Un solo file con copione, comunicazioni previste, attori, punti dei piani, tappe, bivi, cronologia, deleghe, squadre e configurazione: per rigiocare lo scenario con un altro gruppo o portarlo in un altro portale. Contiene materiale riservato: conservalo come i documenti dello scenario e non pubblicarlo.</p>
+    <div className="actions">
+      <button id="btn-scarica-scenario" className="btn plain" onClick=${scarica}>Scarica lo scenario</button>
+      <label className=${'btn plain' + (busy ? ' disabled' : '')} style=${{ cursor: 'pointer' }}>${busy ? 'Caricamento…' : 'Carica uno scenario'}
+        <input id="file-scenario" type="file" accept="application/json,.json" style=${{ display: 'none' }} disabled=${busy} onChange=${carica}/></label>
+    </div>
+    <p className="hint" style=${{ marginTop: '6px' }}>Il caricamento è possibile solo a simulazione azzerata. Codici d'ingresso e partecipanti restano quelli attuali.</p>
   </div>`;
 }
 
@@ -2503,6 +2732,7 @@ function Impostazioni({ d, cfg, ops, load }) {
     fasi: lines(cfg.fasi.map(x => x.nome + (x.tempo || x.durata ? ' | ' + x.tempo : '') + (x.durata ? ' | ' + x.durata : ''))),
     tipiEst: lines(cfg.tipi_esterni.length ? cfg.tipi_esterni : cfg.comunicazioni.map(c => c.tipo)), canali: lines(cfg.canali),
     azienda: cfg.azienda, parole: lines(cfg.monitor_parole), logo: cfg.logo, colore: cfg.colore || '#152030',
+    codiceOss: (d.settings && d.settings.codice_osservatori) || '',
   }));
   const caricaLogo = async e => {
     const file = e.target.files && e.target.files[0]; e.target.value = '';
@@ -2533,6 +2763,7 @@ function Impostazioni({ d, cfg, ops, load }) {
     if (nomi.some(n => !n)) { ops.say('Ogni squadra deve avere un nome.', 'err'); return; }
     const codici = squadre.map(s => s.code.trim().toUpperCase()).filter(Boolean);
     if (new Set(codici).size !== codici.length) { ops.say('Due squadre hanno lo stesso codice: ogni codice deve essere diverso.', 'err'); return; }
+    if (f.codiceOss.trim() && codici.includes(f.codiceOss.trim().toUpperCase())) { ops.say('Il codice degli osservatori deve essere diverso da quelli delle squadre.', 'err'); return; }
     const raw = d.campaign && d.campaign.config ? d.campaign.config : {};
     const config = normCfg({ ...raw, titolo: f.titolo, ruoli: Object.fromEntries(squadre.map(s => [s.id, unlines(s.ruoli)])), tipi_canale: unlines(f.tipi),
       destinatari: unlines(f.destinatari), voci: unlines(f.voci),
@@ -2544,6 +2775,7 @@ function Impostazioni({ d, cfg, ops, load }) {
     const ops_ = [
       sb.from('campaign').update({ config }).eq('id', 1),
       sb.from('teams').upsert(squadre.map((s, i) => ({ id: s.id, nome: s.nome.trim(), colore: s.colore, autorizza: s.autorizza, ordine: i + 1 }))),
+      sb.from('settings').update({ codice_osservatori: f.codiceOss.trim() }).eq('id', 1),
     ];
     // prima si liberano i codici cambiati, poi si scrivono quelli nuovi (il codice è unico tra le squadre)
     const senzaCodice = squadre.filter(s => !s.code.trim()).map(s => s.id);
@@ -2602,6 +2834,8 @@ function Impostazioni({ d, cfg, ops, load }) {
     <div className="section" style=${{ marginTop: '22px' }}><h3>Squadre · ${squadre.length}</h3></div>
     <div className="cards">${squadre.map(team)}</div>
     <div className="actions"><button id="btn-add-team" className="btn plain" onClick=${aggiungi}>+ Aggiungi una squadra</button></div>
+    <div style=${{ maxWidth: '380px' }}><${Field} label="Codice per gli osservatori" hint="Chi entra con questo codice vede tutte le stanze in sola lettura e scrive note. Vuoto: nessun osservatore può entrare.">
+      <input id="codice-oss" type="text" value=${f.codiceOss} onChange=${set('codiceOss')}/><//></div>
     <p className="hint" style=${{ marginTop: '8px' }}>Le comunicazioni esterne le autorizza una squadra con «Autorizza»; quelle che scrive lei le firma da sola. Le richieste tra le stanze vanno alla squadra che sceglie chi scrive. Le modifiche valgono dopo «Salva le impostazioni». L'email del facilitatore si cambia solo dall'SQL.</p>
     <div className="grid2">
       <${Field} label="Tipi di richiesta tra le stanze"><textarea value=${f.tipi} onChange=${set('tipi')}></textarea><//>
@@ -2616,6 +2850,7 @@ function Impostazioni({ d, cfg, ops, load }) {
       <${Field} label="Parole monitorate" hint="Una per riga. Il monitoraggio media evidenzia e filtra i contenuti che le contengono."><textarea value=${f.parole} onChange=${set('parole')}></textarea><//>
     </div>
     <div className="actions"><button id="save-settings" className="btn" onClick=${save}>Salva le impostazioni</button></div>
+    <${ScenarioPacchetto} d=${d} ops=${ops} load=${load}/>
     <div className="section panel" style=${{ borderLeft: '5px solid var(--no)' }}>
       <h3>Nuova sessione</h3>
       <p className="hint">Prima di cancellare, il portale scarica da solo una copia completa della sessione (JSON). Il report per il cliente va preparato prima, dal Debriefing.</p>
@@ -2628,7 +2863,7 @@ function Impostazioni({ d, cfg, ops, load }) {
    Avvio
    ===================================================================== */
 function MemberHome({ user, onLogout }) {
-  const { d, load } = useData(false);
+  const { d, load } = useData('member');
   const ops = useOps(load);
   if (!d.loaded) return html`<${Loading}/>`;
   const m = d.members.find(x => x.user_id === user.id);
@@ -2637,12 +2872,48 @@ function MemberHome({ user, onLogout }) {
   return html`<${Room} d=${d} ops=${ops} me=${{ id: user.id, team: m.team_id, ruolo: m.ruolo, nome: m.nome }} onLogout=${onLogout}/>`;
 }
 
+/* Osservatore: tutte le stanze in sola lettura e le note di osservazione, che arrivano alla regia. */
+function ObserverHome({ user, nome, onLogout }) {
+  const { d, load } = useData('observer');
+  const ops = useOps(load);
+  const [vista, setVista] = useState(() => lsGet('oss:vista', ''));
+  const [nota, setNota] = useState(false);
+  useEffect(() => { lsSet('oss:vista', vista); }, [vista]);
+  if (!d.loaded) return html`<${Loading}/>`;
+  const cfg = normCfg(d.campaign && d.campaign.config);
+  const who = makeWho(d);
+  const v = vista === 'note' || who.ids.includes(vista) ? vista : who.ids[0];
+  const comandi = html`
+    <span className="preview-tag">Osservatore${nome ? ' · ' + nome : ''}</span>
+    ${who.ids.map(id => html`<button key=${id} className="btn-light" aria-pressed=${v === id} onClick=${() => setVista(id)}>${who.teamName(id)}</button>`)}
+    <button className="btn-light" aria-pressed=${v === 'note'} onClick=${() => setVista('note')}><${Icon} n="nota"/>Note</button>
+    <button id="btn-oss-nota" className="btn-light" onClick=${() => setNota(true)}>+ Nota</button>
+    <button className="btn-light" onClick=${onLogout}>Esci</button>`;
+  const modale = nota ? html`<${Modal} onClose=${() => setNota(false)}>
+    <h2>Nuova nota</h2>
+    <p className="hint" style=${{ margin: '4px 0 8px' }}>Una frase su cosa hai visto: arriva subito alla regia, con l'orario.</p>
+    <${NoteRapide} d=${d} who=${who} ops=${ops} compact=${true} me=${user.id} defTeam=${v === 'note' ? '' : v} onSaved=${() => setNota(false)}/>
+  <//>` : null;
+  if (v === 'note') return html`<div className="app">
+    <${Band} color=${cfg.colore || '#152030'} title="Osservatore" sub=${cfg.titolo} campaign=${d.campaign} logo=${cfg.logo}>${comandi}<//>
+    <div className="page"><h2>Note di osservazione</h2>
+      <p className="hint" style=${{ marginTop: '4px', maxWidth: '70ch' }}>Le note di tutti gli osservatori e della regia. Puoi togliere solo le tue. Collegale a un punto dei piani: nel debriefing compaiono sotto quel punto.</p>
+      <div className="panel" style=${{ maxWidth: '780px' }}><${NoteRapide} d=${d} who=${who} ops=${ops} compact=${false} me=${user.id}/></div></div>
+    ${modale}<${Toast} t=${ops.toast}/>
+  </div>`;
+  return html`<div className="app">
+    <${Room} key=${v} d=${d} ops=${ops} me=${{ id: 'osservatore', team: v, preview: true }} extra=${comandi}/>
+    ${modale}
+  </div>`;
+}
+
 function App() {
   const [session, setSession] = useState(undefined);
   const [role, setRole] = useState(null);
+  const [recupero, setRecupero] = useState(false);
   useEffect(() => {
     sb.auth.getSession().then(({ data }) => setSession((data && data.session) || null));
-    const { data } = sb.auth.onAuthStateChange((_e, s) => setSession(s || null));
+    const { data } = sb.auth.onAuthStateChange((e, s) => { setSession(s || null); if (e === 'PASSWORD_RECOVERY') setRecupero(true); });
     return () => data.subscription.unsubscribe();
   }, []);
   const uid = session && session.user && session.user.id;
@@ -2653,7 +2924,9 @@ function App() {
     if (m.data === true) { setRole({ kind: 'master' }); return; }
     const r = await sb.from('members').select('*').eq('user_id', uid).maybeSingle();
     if (r.error) { setRole({ kind: 'error', msg: errMsg(r.error) }); return; }
-    setRole({ kind: r.data ? 'member' : 'join' });
+    if (r.data) { setRole({ kind: 'member' }); return; }
+    const o = await sb.from('osservatori').select('*').eq('user_id', uid).maybeSingle();
+    setRole({ kind: !o.error && o.data ? 'observer' : 'join', nome: o.data && o.data.nome });
   }, [uid]);
   useEffect(() => { setRole(null); resolve(); }, [uid]);
   const logout = async () => { await sb.auth.signOut(); setSession(null); };
@@ -2662,11 +2935,15 @@ function App() {
     <p style=${{ marginTop: '8px' }}>In testa al file index.html vanno inseriti l'URL del progetto Supabase e la chiave publishable.</p></div></div>`;
   if (session === undefined) return html`<${Loading}/>`;
   if (!session) return html`<${Login}/>`;
+  // arrivati dal link di recupero: prima si sceglie la nuova password
+  if (recupero) return html`<div className="gate"><div className="gate-box"><div className="doc">
+    <${NuovaPassword} titolo="Scegli la nuova password" onDone=${() => { setRecupero(false); history.replaceState(null, '', location.pathname); }}/></div></div></div>`;
   if (!role) return html`<${Loading}/>`;
   if (role.kind === 'error') return html`<div className="gate"><div className="gate-box doc"><h2>Qualcosa non va</h2><p style=${{ marginTop: '8px' }}>${role.msg}</p>
     <div className="actions"><button className="btn" onClick=${resolve}>Riprova</button><button className="btn plain" onClick=${logout}>Esci</button></div></div></div>`;
   if (role.kind === 'join') return html`<${Join} onDone=${resolve} onLogout=${logout}/>`;
   if (role.kind === 'master') return html`<${Regia} user=${session.user} onLogout=${logout}/>`;
+  if (role.kind === 'observer') return html`<${ObserverHome} user=${session.user} nome=${role.nome} onLogout=${logout}/>`;
   return html`<${MemberHome} user=${session.user} onLogout=${logout}/>`;
 }
 
